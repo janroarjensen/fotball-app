@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Lagleder – v3</title>
+  <title>Lagleder – v4</title>
   <style>
     :root {
       --bg: #0b1220;
@@ -267,7 +267,7 @@
       </div>
 
       <div class="card hidden collapsible" id="activeMatchCard" data-collapse-key="matchLive">
-        <div class="collapse-head"><div><h3 class="activeMatchTitleDup">Ingen aktiv kamp</h3><div class="muted tiny activeMatchMetaDup">-</div></div><span class="collapse-toggle">Skjul</span></div>
+        <div class="collapse-head"><div><h3 id="activeMatchTitle">Ingen aktiv kamp</h3><div class="muted tiny" id="activeMatchMeta">-</div></div><span class="collapse-toggle">Skjul</span></div>
         <div class="collapse-body">
         <div class="section-title hidden">
           <div>
@@ -831,8 +831,7 @@
         const secondary = e.secondaryPlayerName ? ` → ${e.secondaryPlayerName}` : '';
         const note = e.note ? ` (${e.note})` : '';
         return `${minute}: ${label}${main}${secondary}${note}`;
-      }).join('
-');
+      }).join('\n');
     }
 
     function buildArticleReadySummary(match) {
@@ -868,8 +867,8 @@
         ? `Fra sidelinja og kampnotatene ble det blant annet lagt merke til: ${noteEvents.slice(0,3).map(n => n.note).filter(Boolean).join(' • ')}.`
         : `Kampen utviklet seg gjennom ${period.toLowerCase()}, med høyt tempo, nye bytter og nok nerve til at både tilskuere og trenere fikk brukt stemmebåndet.`;
       const funOutro = scoreFor > scoreAgainst
-        ? 'Hvis noen lurte: ja, det luktet nesten litt cupfinale over stemningen til tider – selv om gresset neppe trenger å ringe lokalavisa selv.'
-        : 'Det ble kanskje ikke gullramme rundt resultatet denne gangen, men det var mer enn nok innsats til å gi både publikum og kiosken valuta for pengene.';
+        ? `Hvis noen lurte: ja, det luktet nesten litt cupfinale over stemningen til tider – selv om gresset neppe trenger å ringe lokalavisa selv.`
+        : `Det ble kanskje ikke gullramme rundt resultatet denne gangen, men det var mer enn nok innsats til å gi både publikum og kiosken valuta for pengene.`;
       const copyText = [
         headline,
         '',
@@ -892,8 +891,7 @@
         '',
         'HENDELSESLOGG',
         formatEventTimelineForArticle(events)
-      ].filter(Boolean).join('
-');
+      ].filter(Boolean).join('\n');
       const escaped = copyText.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
       return `<div class="note"><strong>Klar for avisa:</strong> Kopier teksten under og lim rett inn i artikkelutkastet.</div><textarea id="articleReadyOutput" readonly style="min-height:360px; margin-top:10px;">${escaped}</textarea><div class="top-actions"><button id="btnCopyArticle" class="success">Kopier tekst</button></div>`;
     }
@@ -1194,8 +1192,17 @@
       $('firebaseConfigInput').value = JSON.stringify(defaultConfig, null, 2);
     }
 
+    function handleLoginEnter(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        $('btnLogin').click();
+      }
+    }
+
     function bindUI() {
       document.querySelectorAll('[data-nav]').forEach(btn => btn.addEventListener('click', () => setScreen(btn.dataset.nav)));
+      $('loginEmail').addEventListener('keydown', handleLoginEnter);
+      $('loginPassword').addEventListener('keydown', handleLoginEnter);
       $('btnShowRegister').onclick = () => $('registerCard').classList.remove('hidden');
       $('btnCancelRegister').onclick = () => $('registerCard').classList.add('hidden');
       $('btnDemoMode').onclick = fillDemoAuth;
@@ -1208,6 +1215,7 @@
           return;
         }
         setAuthStatus('Logger inn ...');
+        $('btnLogin').disabled = true;
         try {
           await signInWithEmailAndPassword(state.auth, email, password);
           setAuthStatus('Innlogging OK');
@@ -1215,6 +1223,8 @@
           console.error('Innlogging feilet', err);
           setAuthStatus('Innlogging feilet: ' + (err?.message || 'Ukjent feil'));
           alert('Innlogging feilet: ' + (err?.message || 'Ukjent feil'));
+        } finally {
+          $('btnLogin').disabled = false;
         }
       };
       $('btnRegister').onclick = async () => {
