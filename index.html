@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Lagleder – v4</title>
+  <title>Lagleder – v5</title>
   <style>
     :root {
       --bg: #0b1220;
@@ -133,12 +133,10 @@
     .readonly-input { opacity: .85; }
 
   
-    .prod-badge { background: rgba(49,196,141,.18); color: #9ef0cc; }
-    .admin-badge { background: rgba(245,158,11,.18); color: #ffd48c; }
     .auth-ok { color: #9ef0cc; }
     .auth-error { color: #ffb1b1; }
     .auth-working { color: #d8e7ff; }
-    .readonly-input { opacity: .85; }
+    .debug-note { margin-top: 8px; }
     
   </style>
 </head>
@@ -288,8 +286,8 @@
         <div class="collapse-body">
         <div class="section-title hidden">
           <div>
-            <h3 class="activeMatchTitleDup">Ingen aktiv kamp</h3>
-            <div class="muted tiny activeMatchMetaDup">-</div>
+            <h3 id="activeMatchTitle">Ingen aktiv kamp</h3>
+            <div class="muted tiny" id="activeMatchMeta">-</div>
           </div>
           <span class="pill" id="matchStatePill">Klar</span>
         </div>
@@ -423,13 +421,13 @@
           <button id="btnSaveFirebaseConfig" class="success">Lagre config lokalt</button>
           <button id="btnClearFirebaseConfig" class="ghost">Tøm config</button>
         </div>
-        <div class="note"><strong>Viktig:</strong> Husk korrekt <code>databaseURL</code>. Produksjon krever også at admin-brukere får Firebase custom claim <code>admin=true</code>.</div>
+        <div class="note"><strong>Viktig:</strong> Husk korrekt <code>databaseURL</code>.</div>
         </div>
       </div>
       <div class="card collapsible hidden" id="adminCard" data-collapse-key="settingsAdmin">
         <div class="collapse-head"><div><h3>Admin – brukere</h3><div class="tiny">Administrer brukere og lagtilknytning</div></div><span class="collapse-toggle">Skjul</span></div>
         <div class="collapse-body">
-          <div class="note">Som admin kan du endre brukernavn, rolle og <code>teamId</code> for brukere. Hvis to brukere skal ha tilgang til samme lag, gir du begge samme <code>teamId</code>. I produksjon må admin-brukere ha Firebase custom claim <code>admin=true</code>.</div>
+          <div class="note">Som admin kan du endre brukernavn, rolle og <code>teamId</code> for brukere. Hvis to brukere skal ha tilgang til samme lag, gir du begge samme <code>teamId</code>.</div>
           <div class="top-actions">
             <button id="btnAdminReloadUsers" class="secondary">Oppdater brukere</button>
           </div>
@@ -472,9 +470,6 @@
       ['Elias Mørk',11,'Angrep'],['Isak Lund',12,'Forsvar'],['Tobias Eide',13,'Midtbane'],['Adrian Hauge',14,'Angrep']
     ];
 
-    const REQUIRE_ADMIN_CLAIM = true;
-    const ALLOW_PROFILE_ROLE_FALLBACK = false;
-
     const defaultConfig = {
       apiKey: "AIzaSyBv3l9v4mEn0UAKR10HxNY6szI20JVueCM",
       authDomain: "fotball-app-288cb.firebaseapp.com",
@@ -512,13 +507,9 @@
     }
 
     function renderAuthMiniActions() {
-      if (!state.user) {
-        $('authMiniActions').innerHTML = '<span class="pill">Ikke innlogget</span>';
-        return;
-      }
-      const adminPill = state.isAdmin ? '<span class="pill admin-badge">Administrator</span>' : '';
-      const prodPill = '<span class="pill prod-badge">Produksjon</span>';
-      $('authMiniActions').innerHTML = `<span class="pill">${escapeHtml(state.user.email || '')}</span>${adminPill}${prodPill}`;
+      $('authMiniActions').innerHTML = state.user
+        ? `<span class="pill">${escapeHtml(state.user.email || '')}</span>`
+        : '<span class="pill">Ikke innlogget</span>';
     }
 
     function getPlayersArray() {
@@ -612,12 +603,6 @@
       }
     }
 
-    function isKnownAdmin(user, profile = {}, tokenClaims = {}) {
-      const byClaim = tokenClaims?.admin === true;
-      const byProfile = ALLOW_PROFILE_ROLE_FALLBACK && ((profile?.role || 'user') === 'admin');
-      return REQUIRE_ADMIN_CLAIM ? byClaim : (byClaim || byProfile);
-    }
-
     function initCollapsibles() {
       document.querySelectorAll('.collapsible').forEach(card => {
         const key = card.dataset.collapseKey;
@@ -646,12 +631,17 @@
       const cfg = loadCfg();
       $('firebaseConfigInput').value = JSON.stringify(cfg, null, 2);
       try {
+        if (!cfg.databaseURL || String(cfg.databaseURL).includes('SETT_INN_DATABASE_URL_HER')) {
+          setAuthStatus('Firebase mangler riktig databaseURL. Legg inn korrekt databaseURL under Innstillinger → Firebase-oppsett.', 'error');
+        }
         state.app = initializeApp(cfg, 'lagleder-' + Math.random().toString(36).slice(2));
         state.auth = getAuth(state.app);
         state.db = getDatabase(state.app);
+        setAuthStatus('Firebase er lastet. Klar for innlogging.', 'ok');
         bindAuth();
       } catch (err) {
         console.error(err);
+        setAuthStatus('Klarte ikke å starte Firebase: ' + (err?.message || 'Ukjent feil'), 'error');
         alert('Klarte ikke å starte Firebase. Sjekk spesielt databaseURL.');
       }
     }
@@ -670,48 +660,32 @@
           state.activeMatch = null;
           clearTimer();
           $('headerSub').textContent = 'Logg inn for å hente laget ditt';
-          setAuthStatus('');
           setScreen('auth');
           return;
         }
         $('headerSub').textContent = `Innlogget som ${user.email}`;
-        try {
-          await loadUserProfile();
-        } catch (err) {
-          console.error('Feil ved lasting av profil', err);
-          setAuthStatus('Feil ved lasting av profil: ' + (err?.message || 'Ukjent feil'), 'error');
-        }
+        setAuthStatus('Innlogging OK', 'ok');
+        await loadUserProfile();
       });
     }
 
     async function loadUserProfile() {
-      const tokenResult = await state.user.getIdTokenResult(true);
       const userRef = ref(state.db, `users/${state.user.uid}`);
       const snap = await get(userRef);
       state.profile = snap.exists() ? snap.val() : {};
-
       if (!snap.exists()) {
-        const fallback = {
-          name: state.user.displayName || '',
-          email: state.user.email || '',
-          teamId: 'hof-g11',
-          role: 'user',
-          createdAt: Date.now()
-        };
+        const fallback = { name: state.user.displayName || '', email: state.user.email || '', teamId: 'hof-g11', createdAt: Date.now() };
         await set(userRef, fallback);
         state.profile = fallback;
       }
-
       if (!state.profile.teamId) {
         await update(userRef, { teamId: 'hof-g11' });
         state.profile.teamId = 'hof-g11';
       }
-
-      state.isAdmin = isKnownAdmin(state.user, state.profile, tokenResult.claims || {});
       state.teamId = state.profile.teamId;
+      state.isAdmin = (state.profile.role || 'user') === 'admin';
       $('profileNameInput').value = state.profile.name || state.user.displayName || '';
       $('profilePhoneInput').value = state.profile.phone || '';
-      renderAuthMiniActions();
       subscribeTeam();
       subscribeUsersIfAdmin();
       setScreen('home');
@@ -836,16 +810,17 @@
       const current = state.adminUsers?.[uid] || {};
       const name = ($('admin_name_' + uid)?.value || '').trim();
       const email = current.email || ($('admin_email_' + uid)?.value || '').trim();
-      const teamId = ($('admin_team_' + uid)?.value || '').trim() || 'hof-g11';
+      const teamId = ($('admin_team_' + uid)?.value || '').trim();
       const role = ($('admin_role_' + uid)?.value || 'user').trim();
-      await update(ref(state.db, `users/${uid}`), {
+      await set(ref(state.db, `users/${uid}`), {
+        ...current,
         name,
         email,
         teamId,
         role,
         updatedAt: Date.now()
       });
-      alert('Bruker lagret i databasen. For ekte admin-tilgang i produksjon må custom claim settes via Admin SDK/Cloud Function.');
+      alert('Bruker lagret');
     }
 
     async function adminSetSameTeam(uid) {
@@ -1352,21 +1327,12 @@
     function printReport() { window.print(); }
 
     async function saveProfile() {
-      const obj = {
-        name: $('profileNameInput').value.trim(),
-        phone: $('profilePhoneInput').value.trim(),
-        teamId: state.teamId || 'hof-g11',
-        email: state.user.email || '',
-        role: state.profile?.role || 'user',
-        updatedAt: Date.now()
-      };
-      await update(ref(state.db, `users/${state.user.uid}`), obj);
-      state.profile = { ...(state.profile || {}), ...obj };
+      const obj = { name:$('profileNameInput').value.trim(), phone:$('profilePhoneInput').value.trim(), teamId:state.teamId||'hof-g11', email:state.user.email||'', role: state.profile?.role || 'user', updatedAt:Date.now() };
+      await set(ref(state.db, `users/${state.user.uid}`), obj);
       if (state.user.displayName !== obj.name && obj.name) {
         try { await updateProfile(state.user, { displayName: obj.name }); } catch {}
       }
       setSync('Profil lagret');
-      renderAuthMiniActions();
     }
 
     function fillDemoAuth() {
@@ -1392,6 +1358,11 @@
         if (!email || !password) {
           setAuthStatus('Skriv inn e-post og passord', 'error');
           alert('Skriv inn e-post og passord');
+          return;
+        }
+        if (!state.auth) {
+          setAuthStatus('Firebase Auth er ikke startet. Sjekk databaseURL og config.', 'error');
+          alert('Firebase Auth er ikke startet. Sjekk databaseURL og config.');
           return;
         }
         setAuthStatus('Logger inn ...', 'working');
