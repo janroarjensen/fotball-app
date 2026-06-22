@@ -3,127 +3,44 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Lagleder – rettet enklere bytte</title>
+  <title>Lagleder – kollapsbare felt</title>
   <style>
     :root {
-      --bg: #0b1220;
-      --card: #131c31;
-      --muted: #8ea0c0;
-      --text: #f4f7fb;
-      --accent: #31c48d;
-      --accent-2: #3b82f6;
-      --warn: #f59e0b;
-      --danger: #ef4444;
-      --line: rgba(255,255,255,0.08);
-      --shadow: 0 10px 30px rgba(0,0,0,0.25);
-      --radius: 18px;
+      --bg:#0b1220; --card:#131c31; --muted:#8ea0c0; --text:#f4f7fb; --accent:#31c48d; --accent2:#3b82f6; --warn:#f59e0b; --danger:#ef4444; --line:rgba(255,255,255,.08); --shadow:0 10px 30px rgba(0,0,0,.25); --radius:18px;
     }
-    * { box-sizing: border-box; }
-    html, body {
-      margin: 0; padding: 0;
-      background: linear-gradient(180deg, #070d18, #101a2f 45%, #0d1527);
-      color: var(--text);
-      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-    }
-    body { min-height: 100vh; }
-    button, input, select, textarea { font: inherit; }
-    input, select, textarea {
-      width: 100%;
-      border: 1px solid var(--line);
-      background: rgba(255,255,255,0.04);
-      color: var(--text);
-      padding: 12px 14px;
-      border-radius: 14px;
-      outline: none;
-    }
-    textarea { min-height: 120px; resize: vertical; }
-    button {
-      border: none;
-      border-radius: 14px;
-      padding: 12px 14px;
-      color: white;
-      background: var(--accent-2);
-      font-weight: 700;
-      cursor: pointer;
-      box-shadow: var(--shadow);
-    }
-    button.secondary { background: #223354; }
-    button.success { background: var(--accent); color: #092617; }
-    button.warning { background: var(--warn); color: #291b03; }
-    button.danger { background: var(--danger); }
-    button.ghost { background: transparent; border: 1px solid var(--line); box-shadow: none; }
-    button.small { padding: 8px 10px; font-size: .9rem; }
-    .hidden { display: none !important; }
-    .app { max-width: 560px; margin: 0 auto; min-height: 100vh; padding: 0 14px 92px; }
-    .header {
-      position: sticky; top: 0; z-index: 10; backdrop-filter: blur(12px);
-      background: rgba(8,14,26,.74); border-bottom: 1px solid var(--line);
-      margin: 0 -14px 14px; padding: 14px;
-    }
-    .title { font-size: 1.25rem; font-weight: 800; }
-    .subtitle, .muted { color: var(--muted); }
-    .subtitle { font-size: .92rem; margin-top: 2px; }
-    .tiny { font-size: .78rem; color: var(--muted); }
-    .card {
-      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      padding: 14px;
-      margin-bottom: 14px;
-      box-shadow: var(--shadow);
-    }
-    .card h2, .card h3, .card h4 { margin: 0 0 10px; }
-    .row { display: flex; gap: 10px; }
-    .row > * { flex: 1; }
-    .grid-2, .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .top-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
-    .pill {
-      display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px;
-      border-radius: 999px; background: rgba(255,255,255,.06); border: 1px solid var(--line); font-size: .84rem;
-    }
-    .section-title { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 10px; }
-    .player-item, .event-item, .stat-item {
-      display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;
-      padding: 12px; border-radius: 14px; background: rgba(255,255,255,.04);
-      border: 1px solid rgba(255,255,255,.06); margin-bottom: 8px;
-    }
-    .player-item strong, .event-item strong { display: block; }
-    .badge {
-      display: inline-block; border-radius: 10px; padding: 4px 8px; font-size: .78rem;
-      background: rgba(49,196,141,.18); color: #9ef0cc; margin-top: 4px;
-    }
-    .badge.gray { background: rgba(255,255,255,.08); color: var(--muted); }
-    .badge.warn { background: rgba(245,158,11,.18); color: #ffd48c; }
-    .badge.danger { background: rgba(239,68,68,.18); color: #ffb1b1; }
-    .note {
-      background: rgba(59,130,246,.12); border: 1px solid rgba(59,130,246,.25);
-      color: #d8e7ff; border-radius: 14px; padding: 12px; font-size: .92rem; margin-top: 8px;
-    }
-    .empty { padding: 14px; border-radius: 14px; border: 1px dashed var(--line); color: var(--muted); text-align: center; }
-    .nav {
-      position: fixed; left: 50%; transform: translateX(-50%); bottom: 0; width: min(560px, 100vw);
-      padding: 10px 14px 16px; background: rgba(8,14,26,.88); border-top: 1px solid var(--line); backdrop-filter: blur(12px); z-index: 20;
-    }
-    .nav-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
-    .nav button { padding: 9px 8px; font-size: .78rem; border-radius: 14px; background: rgba(255,255,255,.06); box-shadow: none; border: 1px solid transparent; }
-    .nav button.active { background: #1c2c4b; border-color: rgba(59,130,246,.45); }
-    .timer { font-size: 2rem; font-weight: 900; letter-spacing: 1px; text-align: center; margin: 8px 0 12px; }
-    .scoreline { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; text-align: center; }
-    .scoreline .score { font-size: 2rem; font-weight: 900; }
-    .scoreline .team { font-size: 1rem; font-weight: 700; }
-    .sub-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .player-chip {
-      display: flex; align-items: center; justify-content: space-between; gap: 8px;
-      padding: 10px 12px; border: 1px solid var(--line); border-radius: 14px; background: rgba(255,255,255,.04); margin-bottom: 8px;
-      cursor: pointer;
-    }
-    .player-chip.selected { outline: 2px solid var(--accent-2); background: rgba(59,130,246,.15); }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:linear-gradient(180deg,#070d18,#101a2f 45%,#0d1527);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+    body{min-height:100vh}
+    button,input,select,textarea{font:inherit}
+    input,select,textarea{width:100%;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--text);padding:12px 14px;border-radius:14px;outline:none}
+    textarea{min-height:120px;resize:vertical}
+    button{border:none;border-radius:14px;padding:12px 14px;color:white;background:var(--accent2);font-weight:700;cursor:pointer;box-shadow:var(--shadow)}
+    button.secondary{background:#223354} button.success{background:var(--accent);color:#092617} button.warning{background:var(--warn);color:#291b03} button.danger{background:var(--danger)} button.ghost{background:transparent;border:1px solid var(--line);box-shadow:none} button.small{padding:8px 10px;font-size:.9rem}
+    .hidden{display:none!important}
+    .app{max-width:560px;margin:0 auto;min-height:100vh;padding:0 14px 92px}
+    .header{position:sticky;top:0;z-index:10;backdrop-filter:blur(12px);background:rgba(8,14,26,.74);border-bottom:1px solid var(--line);margin:0 -14px 14px;padding:14px}
+    .title{font-size:1.25rem;font-weight:800}.subtitle,.muted{color:var(--muted)}.subtitle{font-size:.92rem;margin-top:2px}.tiny{font-size:.78rem;color:var(--muted)}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01));border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:14px;box-shadow:var(--shadow)}
+    .row{display:flex;gap:10px}.row>*{flex:1}.grid-2,.btn-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.top-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    .pill{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid var(--line);font-size:.84rem}
+    .section-title{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+    .player-item,.event-item,.stat-item{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:12px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);margin-bottom:8px}
+    .badge{display:inline-block;border-radius:10px;padding:4px 8px;font-size:.78rem;background:rgba(49,196,141,.18);color:#9ef0cc;margin-top:4px}.badge.gray{background:rgba(255,255,255,.08);color:var(--muted)}.badge.warn{background:rgba(245,158,11,.18);color:#ffd48c}.badge.danger{background:rgba(239,68,68,.18);color:#ffb1b1}
+    .note{background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.25);color:#d8e7ff;border-radius:14px;padding:12px;font-size:.92rem;margin-top:8px}
+    .empty{padding:14px;border-radius:14px;border:1px dashed var(--line);color:var(--muted);text-align:center}
+    .nav{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:min(560px,100vw);padding:10px 14px 16px;background:rgba(8,14,26,.88);border-top:1px solid var(--line);backdrop-filter:blur(12px);z-index:20}.nav-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.nav button{padding:9px 8px;font-size:.78rem;border-radius:14px;background:rgba(255,255,255,.06);box-shadow:none;border:1px solid transparent}.nav button.active{background:#1c2c4b;border-color:rgba(59,130,246,.45)}
+    .timer{font-size:2rem;font-weight:900;letter-spacing:1px;text-align:center;margin:8px 0 12px}.scoreline{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;text-align:center}.scoreline .score{font-size:2rem;font-weight:900}.scoreline .team{font-size:1rem;font-weight:700}
+    .sub-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.player-chip{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.04);margin-bottom:8px;cursor:pointer}.player-chip.selected{outline:2px solid var(--accent2);background:rgba(59,130,246,.15)}
+    .collapse-head{display:flex;justify-content:space-between;align-items:center;gap:10px;cursor:pointer;user-select:none}
+    .collapse-head h3,.collapse-head h2,.collapse-head h4{margin:0}
+    .collapse-toggle{font-size:.9rem;color:var(--muted)}
+    .collapsed .collapse-body{display:none}
   </style>
 </head>
 <body>
   <div class="app">
     <div class="header">
-      <div class="title">⚽ Lagleder – rettet enklere bytte</div>
+      <div class="title">⚽ Lagleder – kollapsbare felt</div>
       <div class="subtitle" id="headerSub">Logg inn for å hente laget ditt</div>
       <div class="top-actions" id="authMiniActions"></div>
     </div>
@@ -131,966 +48,209 @@
     <section id="screen-auth" class="screen">
       <div class="card">
         <h2>Logg inn</h2>
-        <div class="row">
-          <div><input id="loginEmail" type="email" placeholder="E-post" /></div>
-          <div><input id="loginPassword" type="password" placeholder="Passord" /></div>
-        </div>
-        <div class="btn-grid" style="margin-top:10px;">
-          <button id="btnLogin">Logg inn</button>
-          <button id="btnShowRegister" class="secondary">Ny bruker</button>
-        </div>
-        <div class="btn-grid" style="margin-top:10px;">
-          <button id="btnResetPassword" class="ghost">Glemt passord</button>
-          <button id="btnDemoMode" class="warning">Fyll demo-data</button>
-        </div>
+        <div class="row"><div><input id="loginEmail" type="email" placeholder="E-post" /></div><div><input id="loginPassword" type="password" placeholder="Passord" /></div></div>
+        <div class="btn-grid" style="margin-top:10px;"><button id="btnLogin">Logg inn</button><button id="btnShowRegister" class="secondary">Ny bruker</button></div>
+        <div class="btn-grid" style="margin-top:10px;"><button id="btnResetPassword" class="ghost">Glemt passord</button><button id="btnDemoMode" class="warning">Fyll demo-data</button></div>
         <div class="note">Nye brukere får automatisk standardlag <code>hof-g11</code> hvis Lag-ID står tomt ved registrering.</div>
       </div>
-
       <div class="card hidden" id="registerCard">
         <h2>Opprett bruker</h2>
-        <div class="row">
-          <div><input id="registerName" placeholder="Navn" /></div>
-          <div><input id="registerEmail" type="email" placeholder="E-post" /></div>
-        </div>
-        <div class="row" style="margin-top:10px;">
-          <div><input id="registerPassword" type="password" placeholder="Passord" /></div>
-          <div><input id="registerTeamId" placeholder="Lag-ID (standard: hof-g11)" /></div>
-        </div>
-        <div class="btn-grid" style="margin-top:10px;">
-          <button id="btnRegister" class="success">Opprett bruker</button>
-          <button id="btnCancelRegister" class="ghost">Avbryt</button>
-        </div>
+        <div class="row"><div><input id="registerName" placeholder="Navn" /></div><div><input id="registerEmail" type="email" placeholder="E-post" /></div></div>
+        <div class="row" style="margin-top:10px;"><div><input id="registerPassword" type="password" placeholder="Passord" /></div><div><input id="registerTeamId" placeholder="Lag-ID (standard: hof-g11)" /></div></div>
+        <div class="btn-grid" style="margin-top:10px;"><button id="btnRegister" class="success">Opprett bruker</button><button id="btnCancelRegister" class="ghost">Avbryt</button></div>
       </div>
     </section>
 
     <section id="screen-home" class="screen hidden">
       <div class="card">
-        <div class="section-title">
-          <div>
-            <h2 id="teamNameTitle">Mitt lag</h2>
-            <div class="muted tiny" id="teamMeta">Ingen lagdata lastet</div>
-          </div>
-          <span class="pill" id="syncPill">Ikke synkronisert</span>
-        </div>
-        <div class="grid-2">
-          <div class="stat-item"><div><strong id="homeTotalPlayers">0</strong><div class="muted tiny">Spillere</div></div></div>
-          <div class="stat-item"><div><strong id="homeTotalMatches">0</strong><div class="muted tiny">Kamper</div></div></div>
-        </div>
-        <div class="grid-2" style="margin-top:10px;">
-          <div class="stat-item"><div><strong id="homeTopScorer">-</strong><div class="muted tiny">Toppscorer</div></div></div>
-          <div class="stat-item"><div><strong id="homeMostMinutes">-</strong><div class="muted tiny">Flest minutter</div></div></div>
-        </div>
+        <div class="section-title"><div><h2 id="teamNameTitle">Mitt lag</h2><div class="muted tiny" id="teamMeta">Ingen lagdata lastet</div></div><span class="pill" id="syncPill">Ikke synkronisert</span></div>
+        <div class="grid-2"><div class="stat-item"><div><strong id="homeTotalPlayers">0</strong><div class="muted tiny">Spillere</div></div></div><div class="stat-item"><div><strong id="homeTotalMatches">0</strong><div class="muted tiny">Kamper</div></div></div></div>
+        <div class="grid-2" style="margin-top:10px;"><div class="stat-item"><div><strong id="homeTopScorer">-</strong><div class="muted tiny">Toppscorer</div></div></div><div class="stat-item"><div><strong id="homeMostMinutes">-</strong><div class="muted tiny">Flest minutter</div></div></div></div>
       </div>
     </section>
 
     <section id="screen-team" class="screen hidden">
-      <div class="card">
-        <h2>Lagoppsett</h2>
-        <div class="row">
-          <div><input id="teamNameInput" placeholder="Lagnavn" /></div>
-          <div><input id="teamSeasonInput" placeholder="Sesong" /></div>
-        </div>
-        <div class="row" style="margin-top:10px;">
-          <div><input id="teamAgeGroupInput" placeholder="Aldersgruppe" /></div>
-          <div><input id="teamDefaultFormationInput" placeholder="Oppstilling" /></div>
-        </div>
-        <div class="top-actions">
-          <button id="btnSaveTeam" class="success">Lagre lagdata</button>
-          <button id="btnLoadSamplePlayers" class="secondary">Legg inn eksempelspillere</button>
+      <div class="card collapsible" data-collapse-key="teamInfo">
+        <div class="collapse-head"><h2>Lagoppsett</h2><span class="collapse-toggle">Skjul</span></div>
+        <div class="collapse-body">
+          <div class="row"><div><input id="teamNameInput" placeholder="Lagnavn" /></div><div><input id="teamSeasonInput" placeholder="Sesong" /></div></div>
+          <div class="row" style="margin-top:10px;"><div><input id="teamAgeGroupInput" placeholder="Aldersgruppe" /></div><div><input id="teamDefaultFormationInput" placeholder="Oppstilling" /></div></div>
+          <div class="top-actions"><button id="btnSaveTeam" class="success">Lagre lagdata</button><button id="btnLoadSamplePlayers" class="secondary">Legg inn eksempelspillere</button></div>
         </div>
       </div>
-      <div class="card">
-        <div class="section-title"><h3>Spillere</h3><span class="pill" id="playerCountPill">0 spillere</span></div>
-        <div class="row">
-          <div><input id="playerNameInput" placeholder="Spillernavn" /></div>
-          <div><input id="playerNumberInput" type="number" placeholder="Nr" /></div>
+      <div class="card collapsible" data-collapse-key="teamPlayers">
+        <div class="collapse-head"><h3>Spillere</h3><span class="collapse-toggle">Skjul</span></div>
+        <div class="collapse-body">
+          <div class="row"><div><input id="playerNameInput" placeholder="Spillernavn" /></div><div><input id="playerNumberInput" type="number" placeholder="Nr" /></div></div>
+          <div class="row" style="margin-top:10px;"><div><select id="playerPositionInput"><option value="Keeper">Keeper</option><option value="Forsvar">Forsvar</option><option value="Midtbane">Midtbane</option><option value="Angrep">Angrep</option><option value="Utespiller">Utespiller</option></select></div><div><select id="playerStatusInput"><option value="Tilgjengelig">Tilgjengelig</option><option value="Usikker">Usikker</option><option value="Skadet">Skadet</option><option value="Borte">Borte</option></select></div></div>
+          <div class="top-actions"><button id="btnAddPlayer">Legg til spiller</button><button id="btnReloadPlayers" class="ghost">Oppdater liste</button><span class="pill" id="playerCountPill">0 spillere</span></div>
+          <div id="playersList" style="margin-top:12px;"></div>
         </div>
-        <div class="row" style="margin-top:10px;">
-          <div>
-            <select id="playerPositionInput">
-              <option value="Keeper">Keeper</option>
-              <option value="Forsvar">Forsvar</option>
-              <option value="Midtbane">Midtbane</option>
-              <option value="Angrep">Angrep</option>
-              <option value="Utespiller">Utespiller</option>
-            </select>
-          </div>
-          <div>
-            <select id="playerStatusInput">
-              <option value="Tilgjengelig">Tilgjengelig</option>
-              <option value="Usikker">Usikker</option>
-              <option value="Skadet">Skadet</option>
-              <option value="Borte">Borte</option>
-            </select>
-          </div>
-        </div>
-        <div class="top-actions">
-          <button id="btnAddPlayer">Legg til spiller</button>
-          <button id="btnReloadPlayers" class="ghost">Oppdater liste</button>
-        </div>
-        <div id="playersList" style="margin-top:12px;"></div>
       </div>
     </section>
 
     <section id="screen-match" class="screen hidden">
-      <div class="card">
-        <h2>Ny kamp</h2>
-        <div class="row">
-          <div><input id="matchOpponentInput" placeholder="Motstander" /></div>
-          <div><input id="matchVenueInput" placeholder="Sted" /></div>
-        </div>
-        <div class="row" style="margin-top:10px;">
-          <div><input id="matchCompetitionInput" placeholder="Serie / cup / treningskamp" /></div>
-          <div><input id="matchDateInput" type="datetime-local" /></div>
-        </div>
-        <div class="row" style="margin-top:10px;">
-          <div><input id="matchLengthInput" type="number" value="60" /></div>
-          <div><input id="playersOnFieldInput" type="number" value="7" /></div>
-        </div>
-        <div class="top-actions">
-          <button id="btnCreateMatch" class="success">Opprett kamp</button>
-          <button id="btnLoadLastLineup" class="secondary">Bruk forrige kampstall</button>
+      <div class="card collapsible" data-collapse-key="matchNew">
+        <div class="collapse-head"><h2>Ny kamp</h2><span class="collapse-toggle">Skjul</span></div>
+        <div class="collapse-body">
+          <div class="row"><div><input id="matchOpponentInput" placeholder="Motstander" /></div><div><input id="matchVenueInput" placeholder="Sted" /></div></div>
+          <div class="row" style="margin-top:10px;"><div><input id="matchCompetitionInput" placeholder="Serie / cup / treningskamp" /></div><div><input id="matchDateInput" type="datetime-local" /></div></div>
+          <div class="row" style="margin-top:10px;"><div><input id="matchLengthInput" type="number" value="60" /></div><div><input id="playersOnFieldInput" type="number" value="7" /></div></div>
+          <div class="top-actions"><button id="btnCreateMatch" class="success">Opprett kamp</button><button id="btnLoadLastLineup" class="secondary">Bruk forrige kampstall</button></div>
         </div>
       </div>
 
-      <div class="card hidden" id="activeMatchCard">
-        <div class="section-title">
-          <div>
-            <h3 id="activeMatchTitle">Ingen aktiv kamp</h3>
-            <div class="muted tiny" id="activeMatchMeta">-</div>
-          </div>
-          <span class="pill" id="matchStatePill">Klar</span>
-        </div>
-        <div class="scoreline">
-          <div><div class="team" id="scoreHomeTeam">Hjemmelag</div><div class="score" id="scoreHome">0</div></div>
-          <div class="pill" id="periodPill">1. omgang</div>
-          <div><div class="team" id="scoreAwayTeam">Motstander</div><div class="score" id="scoreAway">0</div></div>
-        </div>
-        <div class="timer" id="matchTimer">00:00</div>
-        <div class="btn-grid">
-          <button id="btnKickoff" class="success">Start kamp</button>
-          <button id="btnPauseToggle" class="warning">Pause</button>
-        </div>
-        <div class="btn-grid" style="margin-top:10px;">
-          <button id="btnSecondHalf" class="secondary">2. omgang</button>
-          <button id="btnEndMatch" class="danger">Avslutt kamp</button>
+      <div class="card hidden collapsible" id="activeMatchCard" data-collapse-key="matchLive">
+        <div class="collapse-head"><div><h3 id="activeMatchTitle">Ingen aktiv kamp</h3><div class="muted tiny" id="activeMatchMeta">-</div></div><span class="collapse-toggle">Skjul</span></div>
+        <div class="collapse-body">
+          <div class="scoreline"><div><div class="team" id="scoreHomeTeam">Hjemmelag</div><div class="score" id="scoreHome">0</div></div><div class="pill" id="periodPill">1. omgang</div><div><div class="team" id="scoreAwayTeam">Motstander</div><div class="score" id="scoreAway">0</div></div></div>
+          <div class="timer" id="matchTimer">00:00</div>
+          <div class="top-actions"><span class="pill" id="matchStatePill">Klar</span></div>
+          <div class="btn-grid"><button id="btnKickoff" class="success">Start kamp</button><button id="btnPauseToggle" class="warning">Pause</button></div>
+          <div class="btn-grid" style="margin-top:10px;"><button id="btnSecondHalf" class="secondary">2. omgang</button><button id="btnEndMatch" class="danger">Avslutt kamp</button></div>
         </div>
       </div>
 
-      <div class="card hidden" id="lineupCard">
-        <div class="section-title"><h3>Kampstall</h3><span class="pill" id="lineupPill">0 valgt</span></div>
-        <div id="lineupList"></div>
+      <div class="card hidden collapsible" id="lineupCard" data-collapse-key="matchLineup">
+        <div class="collapse-head"><div><h3>Kampstall</h3><span class="pill" id="lineupPill">0 valgt</span></div><span class="collapse-toggle">Skjul</span></div>
+        <div class="collapse-body"><div id="lineupList"></div></div>
       </div>
 
-      <div class="card hidden" id="simpleSubCard">
-        <div class="section-title"><h3>Enkelt bytte</h3><span class="pill" id="subSelectionPill">Ingen valgt</span></div>
-        <div class="note">Velg spilleren som skal <strong>UT</strong> fra listen til venstre. Deretter velger du spilleren som skal <strong>INN</strong> fra listen til høyre. Byttet lagres automatisk.</div>
-        <div class="sub-grid" style="margin-top:12px;">
-          <div>
-            <h4>På banen (UT)</h4>
-            <div id="onFieldList"></div>
-          </div>
-          <div>
-            <h4>Benk / kampstall (INN)</h4>
-            <div id="benchList"></div>
-          </div>
-        </div>
-        <div class="top-actions">
-          <button id="btnCancelSimpleSub" class="ghost">Nullstill valg</button>
+      <div class="card hidden collapsible" id="simpleSubCard" data-collapse-key="matchSimpleSub">
+        <div class="collapse-head"><div><h3>Enkelt bytte</h3><span class="pill" id="subSelectionPill">Ingen valgt</span></div><span class="collapse-toggle">Skjul</span></div>
+        <div class="collapse-body">
+          <div class="note">Velg spiller <strong>UT</strong> først, deretter spiller <strong>INN</strong>. Byttet lagres automatisk.</div>
+          <div class="sub-grid" style="margin-top:12px;"><div><h4>På banen (UT)</h4><div id="onFieldList"></div></div><div><h4>Benk / kampstall (INN)</h4><div id="benchList"></div></div></div>
+          <div class="top-actions"><button id="btnCancelSimpleSub" class="ghost">Nullstill valg</button></div>
         </div>
       </div>
 
-      <div class="card hidden" id="eventControlsCard">
-        <h3>Registrer hendelse</h3>
-        <div class="btn-grid">
-          <button id="btnQuickGoal" class="success">Registrer mål</button>
-          <button id="btnQuickAgainst" class="danger">Mål imot</button>
-          <button id="btnQuickSub" class="secondary">Bytte (avansert)</button>
-          <button id="btnQuickNote" class="ghost">Kampnotat</button>
-        </div>
-        <div id="eventEditor" class="hidden" style="margin-top:12px;">
-          <div class="row">
-            <div>
-              <select id="eventTypeInput">
-                <option value="goal">Mål</option>
-                <option value="goalAgainst">Mål imot</option>
-                <option value="assist">Assist</option>
-                <option value="sub">Bytte</option>
-                <option value="pause">Pause</option>
-                <option value="secondHalf">2. omgang</option>
-                <option value="note">Notat</option>
-                <option value="chance">Stor sjanse</option>
-                <option value="save">Redning</option>
-              </select>
-            </div>
-            <div><select id="eventPlayerInput"></select></div>
-          </div>
-          <div class="row" style="margin-top:10px;">
-            <div><select id="eventSecondaryPlayerInput"></select></div>
-            <div><input id="eventNoteInput" placeholder="Notat / kommentar" /></div>
-          </div>
-          <div class="btn-grid" style="margin-top:10px;">
-            <button id="btnSaveEvent">Lagre hendelse</button>
-            <button id="btnCancelEvent" class="ghost">Avbryt</button>
-          </div>
+      <div class="card hidden collapsible" id="eventControlsCard" data-collapse-key="matchEventsEditor">
+        <div class="collapse-head"><h3>Registrer hendelse</h3><span class="collapse-toggle">Skjul</span></div>
+        <div class="collapse-body">
+          <div class="btn-grid"><button id="btnQuickGoal" class="success">Registrer mål</button><button id="btnQuickAgainst" class="danger">Mål imot</button><button id="btnQuickSub" class="secondary">Bytte (avansert)</button><button id="btnQuickNote" class="ghost">Kampnotat</button></div>
+          <div id="eventEditor" class="hidden" style="margin-top:12px;"><div class="row"><div><select id="eventTypeInput"><option value="goal">Mål</option><option value="goalAgainst">Mål imot</option><option value="assist">Assist</option><option value="sub">Bytte</option><option value="pause">Pause</option><option value="secondHalf">2. omgang</option><option value="note">Notat</option><option value="chance">Stor sjanse</option><option value="save">Redning</option></select></div><div><select id="eventPlayerInput"></select></div></div><div class="row" style="margin-top:10px;"><div><select id="eventSecondaryPlayerInput"></select></div><div><input id="eventNoteInput" placeholder="Notat / kommentar" /></div></div><div class="btn-grid" style="margin-top:10px;"><button id="btnSaveEvent">Lagre hendelse</button><button id="btnCancelEvent" class="ghost">Avbryt</button></div></div>
         </div>
       </div>
 
-      <div class="card hidden" id="eventsCard">
-        <div class="section-title"><h3>Hendelseslogg</h3><button id="btnReverseLastEvent" class="ghost small">Angre siste</button></div>
-        <div id="eventsList"></div>
+      <div class="card hidden collapsible" id="eventsCard" data-collapse-key="matchHistory">
+        <div class="collapse-head"><div><h3>Hendelseslogg</h3></div><span class="collapse-toggle">Skjul</span></div>
+        <div class="collapse-body"><div class="top-actions"><button id="btnReverseLastEvent" class="ghost small">Angre siste</button></div><div id="eventsList"></div></div>
       </div>
     </section>
 
     <section id="screen-report" class="screen hidden">
-      <div class="card">
-        <div class="section-title"><h2>Rapporter</h2><span class="pill" id="reportStatusPill">Klar</span></div>
-        <div class="btn-grid">
-          <button id="btnGenerateMatchReport" class="success">Lag kamprapport</button>
-          <button id="btnGenerateSeasonReport" class="secondary">Lag sesongrapport</button>
-        </div>
-        <div class="btn-grid" style="margin-top:10px;">
-          <button id="btnPrintReport" class="ghost">Skriv ut</button>
-          <button id="btnExportCsv" class="ghost">Eksporter CSV</button>
-        </div>
+      <div class="card collapsible" data-collapse-key="reportMain">
+        <div class="collapse-head"><div><h2>Rapporter</h2><span class="pill" id="reportStatusPill">Klar</span></div><span class="collapse-toggle">Skjul</span></div>
+        <div class="collapse-body"><div class="btn-grid"><button id="btnGenerateMatchReport" class="success">Lag kamprapport</button><button id="btnGenerateSeasonReport" class="secondary">Lag sesongrapport</button></div><div class="btn-grid" style="margin-top:10px;"><button id="btnPrintReport" class="ghost">Skriv ut</button><button id="btnExportCsv" class="ghost">Eksporter CSV</button></div></div>
       </div>
-      <div class="card"><h3>AI-lignende sammendrag</h3><div id="reportContent" style="line-height:1.6;"></div></div>
-      <div class="card"><h3>Sesongstatistikk</h3><div id="seasonStatsList"></div></div>
+      <div class="card collapsible" data-collapse-key="reportSummary"><div class="collapse-head"><h3>AI-lignende sammendrag</h3><span class="collapse-toggle">Skjul</span></div><div class="collapse-body"><div id="reportContent" style="line-height:1.6;"></div></div></div>
+      <div class="card collapsible" data-collapse-key="reportSeason"><div class="collapse-head"><h3>Sesongstatistikk</h3><span class="collapse-toggle">Skjul</span></div><div class="collapse-body"><div id="seasonStatsList"></div></div></div>
     </section>
 
     <section id="screen-settings" class="screen hidden">
-      <div class="card">
-        <h2>Innstillinger</h2>
-        <div class="row">
-          <div><input id="profileNameInput" placeholder="Navn" /></div>
-          <div><input id="profilePhoneInput" placeholder="Telefon (valgfritt)" /></div>
-        </div>
-        <div class="top-actions">
-          <button id="btnSaveProfile">Lagre profil</button>
-          <button id="btnLogout" class="danger">Logg ut</button>
-        </div>
-      </div>
-      <div class="card">
-        <h3>Firebase-oppsett</h3>
-        <textarea id="firebaseConfigInput" spellcheck="false"></textarea>
-        <div class="top-actions">
-          <button id="btnSaveFirebaseConfig" class="success">Lagre config lokalt</button>
-          <button id="btnClearFirebaseConfig" class="ghost">Tøm config</button>
-        </div>
-        <div class="note"><strong>Viktig:</strong> Husk korrekt <code>databaseURL</code>.</div>
-      </div>
+      <div class="card collapsible" data-collapse-key="settingsProfile"><div class="collapse-head"><h2>Profil</h2><span class="collapse-toggle">Skjul</span></div><div class="collapse-body"><div class="row"><div><input id="profileNameInput" placeholder="Navn" /></div><div><input id="profilePhoneInput" placeholder="Telefon (valgfritt)" /></div></div><div class="top-actions"><button id="btnSaveProfile">Lagre profil</button><button id="btnLogout" class="danger">Logg ut</button></div></div></div>
+      <div class="card collapsible" data-collapse-key="settingsFirebase"><div class="collapse-head"><h3>Firebase-oppsett</h3><span class="collapse-toggle">Skjul</span></div><div class="collapse-body"><textarea id="firebaseConfigInput" spellcheck="false"></textarea><div class="top-actions"><button id="btnSaveFirebaseConfig" class="success">Lagre config lokalt</button><button id="btnClearFirebaseConfig" class="ghost">Tøm config</button></div><div class="note"><strong>Viktig:</strong> Husk korrekt <code>databaseURL</code>.</div></div></div>
     </section>
   </div>
 
-  <nav class="nav hidden" id="bottomNav">
-    <div class="nav-grid">
-      <button data-nav="home" class="active">Hjem</button>
-      <button data-nav="team">Lag</button>
-      <button data-nav="match">Kamp</button>
-      <button data-nav="report">Rapport</button>
-      <button data-nav="settings">Mer</button>
-    </div>
-  </nav>
+  <nav class="nav hidden" id="bottomNav"><div class="nav-grid"><button data-nav="home" class="active">Hjem</button><button data-nav="team">Lag</button><button data-nav="match">Kamp</button><button data-nav="report">Rapport</button><button data-nav="settings">Mer</button></div></nav>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import {
-      getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword,
-      sendPasswordResetEmail, signOut, updateProfile
-    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
     import { getDatabase, ref, get, set, push, update, remove, onValue } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
 
     const $ = (id) => document.getElementById(id);
-    const state = {
-      app: null, auth: null, db: null, user: null, profile: null, teamId: null,
-      team: { info: {}, players: {}, matches: {} },
-      activeMatchId: null, activeMatch: null, timerInterval: null,
-      simpleSub: { outId: null, inId: null }
-    };
+    const state = { app:null, auth:null, db:null, user:null, profile:null, teamId:null, team:{info:{},players:{},matches:{}}, activeMatchId:null, activeMatch:null, timerInterval:null, simpleSub:{outId:null,inId:null} };
+    const samplePlayers = [['Ola Hansen',1,'Keeper'],['Emil Berg',4,'Forsvar'],['Jonas Nilsen',5,'Forsvar'],['Mats Solberg',6,'Forsvar'],['Noah Johansen',7,'Midtbane'],['William Dahl',8,'Midtbane'],['Sander Lie',9,'Angrep'],['Lukas Vik',10,'Midtbane'],['Elias Mørk',11,'Angrep'],['Isak Lund',12,'Forsvar'],['Tobias Eide',13,'Midtbane'],['Adrian Hauge',14,'Angrep']];
+    const defaultConfig = { apiKey:"AIzaSyBv3l9v4mEn0UAKR10HxNY6szI20JVueCM", authDomain:"fotball-app-288cb.firebaseapp.com", databaseURL:"SETT_INN_DATABASE_URL_HER", projectId:"fotball-app-288cb", storageBucket:"fotball-app-288cb.firebasestorage.app", messagingSenderId:"598549891304", appId:"1:598549891304:web:9da1901c8d49f284df215d" };
 
-    const samplePlayers = [
-      ['Ola Hansen',1,'Keeper'],['Emil Berg',4,'Forsvar'],['Jonas Nilsen',5,'Forsvar'],['Mats Solberg',6,'Forsvar'],
-      ['Noah Johansen',7,'Midtbane'],['William Dahl',8,'Midtbane'],['Sander Lie',9,'Angrep'],['Lukas Vik',10,'Midtbane'],
-      ['Elias Mørk',11,'Angrep'],['Isak Lund',12,'Forsvar'],['Tobias Eide',13,'Midtbane'],['Adrian Hauge',14,'Angrep']
-    ];
+    function loadCfg(){ try{ const raw=localStorage.getItem('lagleder.firebaseConfig'); return raw?JSON.parse(raw):defaultConfig; }catch{return defaultConfig;} }
+    function saveCfg(cfg){ localStorage.setItem('lagleder.firebaseConfig', JSON.stringify(cfg)); $('firebaseConfigInput').value=JSON.stringify(cfg,null,2); }
+    function escapeHtml(str){ return String(str||'').replace(/[&<>\'\"]/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','\"':'&quot;'}[s])); }
+    function setScreen(name){ document.querySelectorAll('.screen').forEach(el=>el.classList.add('hidden')); $('screen-'+name).classList.remove('hidden'); const nav=$('bottomNav'); if(name==='auth') nav.classList.add('hidden'); else nav.classList.remove('hidden'); document.querySelectorAll('.nav button').forEach(btn=>btn.classList.toggle('active', btn.dataset.nav===name)); }
+    function renderAuthMiniActions(){ $('authMiniActions').innerHTML = state.user ? `<span class="pill">${escapeHtml(state.user.email||'')}</span>` : '<span class="pill">Ikke innlogget</span>'; }
+    function getPlayersArray(){ return Object.entries(state.team?.players||{}).map(([id,p])=>({id,...p})).sort((a,b)=>(Number(a.number)||999)-(Number(b.number)||999)||(a.name||'').localeCompare(b.name||'')); }
+    function getMatchesArray(){ return Object.entries(state.team?.matches||{}).map(([id,m])=>({id,...m})).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)); }
+    function getActiveMatch(){ if(state.activeMatchId&&state.team?.matches?.[state.activeMatchId]) return {id:state.activeMatchId,...state.team.matches[state.activeMatchId]}; const m=getMatchesArray().find(x=>['Klar','Pågår','Pause'].includes(x.status||'')&&!x.archived); state.activeMatchId=m?m.id:null; return m||null; }
+    function formatClock(ms){ const t=Math.floor(ms/1000); return `${String(Math.floor(t/60)).padStart(2,'0')}:${String(t%60).padStart(2,'0')}`; }
+    function formatMinute(ms){ return `${Math.floor(ms/60000)+1}'`; }
+    function getElapsedMs(match){ const timer=match?.timer||{}; const base=Number(timer.accumulatedMs||0); if(timer.running&&timer.startedAt) return base+Math.max(0, Date.now()-timer.startedAt); return base; }
+    function updateTimerDisplay(){ $('matchTimer').textContent=formatClock(state.activeMatch?getElapsedMs(state.activeMatch):0); }
+    function startTimer(){ if(state.timerInterval) clearInterval(state.timerInterval); state.timerInterval=setInterval(updateTimerDisplay,1000); updateTimerDisplay(); }
+    function clearTimer(){ if(state.timerInterval) clearInterval(state.timerInterval); state.timerInterval=null; updateTimerDisplay(); }
+    function setSync(text){ if($('syncPill')) $('syncPill').textContent=text; }
 
-    const defaultConfig = {
-      apiKey: "AIzaSyBv3l9v4mEn0UAKR10HxNY6szI20JVueCM",
-      authDomain: "fotball-app-288cb.firebaseapp.com",
-      databaseURL: "SETT_INN_DATABASE_URL_HER",
-      projectId: "fotball-app-288cb",
-      storageBucket: "fotball-app-288cb.firebasestorage.app",
-      messagingSenderId: "598549891304",
-      appId: "1:598549891304:web:9da1901c8d49f284df215d"
-    };
-
-    function loadCfg() {
-      try {
-        const raw = localStorage.getItem('lagleder.firebaseConfig');
-        return raw ? JSON.parse(raw) : defaultConfig;
-      } catch {
-        return defaultConfig;
-      }
-    }
-
-    function saveCfg(cfg) {
-      localStorage.setItem('lagleder.firebaseConfig', JSON.stringify(cfg));
-      $('firebaseConfigInput').value = JSON.stringify(cfg, null, 2);
-    }
-
-    function escapeHtml(str) {
-      return String(str || '').replace(/[&<>\'\"]/g, s => ({ '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','\"':'&quot;' }[s]));
-    }
-
-    function setScreen(name) {
-      document.querySelectorAll('.screen').forEach(el => el.classList.add('hidden'));
-      $('screen-' + name).classList.remove('hidden');
-      const nav = $('bottomNav');
-      if (name === 'auth') nav.classList.add('hidden'); else nav.classList.remove('hidden');
-      document.querySelectorAll('.nav button').forEach(btn => btn.classList.toggle('active', btn.dataset.nav === name));
-    }
-
-    function renderAuthMiniActions() {
-      $('authMiniActions').innerHTML = state.user
-        ? `<span class="pill">${escapeHtml(state.user.email || '')}</span>`
-        : '<span class="pill">Ikke innlogget</span>';
-    }
-
-    function getPlayersArray() {
-      return Object.entries(state.team?.players || {}).map(([id,p]) => ({ id, ...p }))
-        .sort((a,b) => (Number(a.number)||999) - (Number(b.number)||999) || (a.name||'').localeCompare(b.name||''));
-    }
-
-    function getMatchesArray() {
-      return Object.entries(state.team?.matches || {}).map(([id,m]) => ({ id, ...m }))
-        .sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
-    }
-
-    function getActiveMatch() {
-      if (state.activeMatchId && state.team?.matches?.[state.activeMatchId]) {
-        return { id: state.activeMatchId, ...state.team.matches[state.activeMatchId] };
-      }
-      const m = getMatchesArray().find(x => ['Klar','Pågår','Pause'].includes(x.status || '') && !x.archived);
-      state.activeMatchId = m ? m.id : null;
-      return m || null;
-    }
-
-    function formatClock(ms) {
-      const t = Math.floor(ms / 1000);
-      return `${String(Math.floor(t/60)).padStart(2,'0')}:${String(t%60).padStart(2,'0')}`;
-    }
-
-    function formatMinute(ms) {
-      return `${Math.floor(ms/60000)+1}'`;
-    }
-
-    function getElapsedMs(match) {
-      const timer = match?.timer || {};
-      const base = Number(timer.accumulatedMs || 0);
-      if (timer.running && timer.startedAt) return base + Math.max(0, Date.now() - timer.startedAt);
-      return base;
-    }
-
-    function startTimer() {
-      if (state.timerInterval) clearInterval(state.timerInterval);
-      state.timerInterval = setInterval(updateTimerDisplay, 1000);
-      updateTimerDisplay();
-    }
-
-    function clearTimer() {
-      if (state.timerInterval) clearInterval(state.timerInterval);
-      state.timerInterval = null;
-      updateTimerDisplay();
-    }
-
-    function updateTimerDisplay() {
-      $('matchTimer').textContent = formatClock(state.activeMatch ? getElapsedMs(state.activeMatch) : 0);
-    }
-
-    function setSync(text) {
-      if ($('syncPill')) $('syncPill').textContent = text;
-    }
-
-    function initFirebase() {
-      const cfg = loadCfg();
-      $('firebaseConfigInput').value = JSON.stringify(cfg, null, 2);
-      try {
-        state.app = initializeApp(cfg, 'lagleder-' + Math.random().toString(36).slice(2));
-        state.auth = getAuth(state.app);
-        state.db = getDatabase(state.app);
-        bindAuth();
-      } catch (err) {
-        console.error(err);
-        alert('Klarte ikke å starte Firebase. Sjekk spesielt databaseURL.');
-      }
-    }
-
-    function bindAuth() {
-      onAuthStateChanged(state.auth, async user => {
-        state.user = user || null;
-        renderAuthMiniActions();
-        if (!user) {
-          state.profile = null;
-          state.teamId = null;
-          state.team = { info: {}, players: {}, matches: {} };
-          state.activeMatchId = null;
-          state.activeMatch = null;
-          clearTimer();
-          $('headerSub').textContent = 'Logg inn for å hente laget ditt';
-          setScreen('auth');
-          return;
-        }
-        $('headerSub').textContent = `Innlogget som ${user.email}`;
-        await loadUserProfile();
+    function initCollapsibles(){
+      document.querySelectorAll('.collapsible').forEach(card => {
+        const key = card.dataset.collapseKey;
+        const head = card.querySelector('.collapse-head');
+        const label = card.querySelector('.collapse-toggle');
+        const saved = localStorage.getItem('lagleder.collapse.' + key);
+        if(saved === '1') { card.classList.add('collapsed'); if(label) label.textContent='Vis'; }
+        else if(label) label.textContent='Skjul';
+        if(head){ head.addEventListener('click', (e) => {
+          if(e.target.closest('button,input,select,textarea,a,label')) return;
+          card.classList.toggle('collapsed');
+          const isCollapsed = card.classList.contains('collapsed');
+          localStorage.setItem('lagleder.collapse.' + key, isCollapsed ? '1' : '0');
+          if(label) label.textContent = isCollapsed ? 'Vis' : 'Skjul';
+        }); }
       });
     }
 
-    async function loadUserProfile() {
-      const userRef = ref(state.db, `users/${state.user.uid}`);
-      const snap = await get(userRef);
-      state.profile = snap.exists() ? snap.val() : {};
-      if (!snap.exists()) {
-        const fallback = { name: state.user.displayName || '', email: state.user.email || '', teamId: 'hof-g11', createdAt: Date.now() };
-        await set(userRef, fallback);
-        state.profile = fallback;
-      }
-      if (!state.profile.teamId) {
-        await update(userRef, { teamId: 'hof-g11' });
-        state.profile.teamId = 'hof-g11';
-      }
-      state.teamId = state.profile.teamId;
-      $('profileNameInput').value = state.profile.name || state.user.displayName || '';
-      $('profilePhoneInput').value = state.profile.phone || '';
-      subscribeTeam();
-      setScreen('home');
-    }
+    function initFirebase(){ const cfg=loadCfg(); $('firebaseConfigInput').value=JSON.stringify(cfg,null,2); try{ state.app=initializeApp(cfg,'lagleder-'+Math.random().toString(36).slice(2)); state.auth=getAuth(state.app); state.db=getDatabase(state.app); bindAuth(); }catch(err){ console.error(err); alert('Klarte ikke å starte Firebase. Sjekk spesielt databaseURL.'); } }
+    function bindAuth(){ onAuthStateChanged(state.auth, async user => { state.user=user||null; renderAuthMiniActions(); if(!user){ state.profile=null; state.teamId=null; state.team={info:{},players:{},matches:{}}; state.activeMatchId=null; state.activeMatch=null; clearTimer(); $('headerSub').textContent='Logg inn for å hente laget ditt'; setScreen('auth'); return; } $('headerSub').textContent=`Innlogget som ${user.email}`; await loadUserProfile(); }); }
+    async function loadUserProfile(){ const userRef=ref(state.db, `users/${state.user.uid}`); const snap=await get(userRef); state.profile=snap.exists()?snap.val():{}; if(!snap.exists()){ const fallback={name:state.user.displayName||'',email:state.user.email||'',teamId:'hof-g11',createdAt:Date.now()}; await set(userRef,fallback); state.profile=fallback; } if(!state.profile.teamId){ await update(userRef,{teamId:'hof-g11'}); state.profile.teamId='hof-g11'; } state.teamId=state.profile.teamId; $('profileNameInput').value=state.profile.name||state.user.displayName||''; $('profilePhoneInput').value=state.profile.phone||''; subscribeTeam(); setScreen('home'); }
+    function subscribeTeam(){ const teamRef=ref(state.db, `teams/${state.teamId}`); onValue(teamRef, async snap => { if(!snap.exists()){ await set(teamRef,{info:{name:'Hof G11',season:'2026',ageGroup:'G11',defaultFormation:'7er',updatedAt:Date.now()},players:{},matches:{}}); return; } state.team=snap.val()||{info:{},players:{},matches:{}}; renderAll(); setSync('Synkronisert'); }, err => { console.error(err); setSync('Feil ved synk'); }); }
 
-    function subscribeTeam() {
-      const teamRef = ref(state.db, `teams/${state.teamId}`);
-      onValue(teamRef, async snap => {
-        if (!snap.exists()) {
-          await set(teamRef, { info:{ name:'Hof G11', season:'2026', ageGroup:'G11', defaultFormation:'7er', updatedAt:Date.now() }, players:{}, matches:{} });
-          return;
-        }
-        state.team = snap.val() || { info:{}, players:{}, matches:{} };
-        renderAll();
-        setSync('Synkronisert');
-      }, err => {
-        console.error(err);
-        setSync('Feil ved synk');
-      });
-    }
+    function computeSeasonStats(){ const players=getPlayersArray(); const map={}; players.forEach(p=>map[p.id]={id:p.id,name:p.name,matches:0,minutes:0,goals:0,assists:0,contribution:0}); for(const match of getMatchesArray()){ const counted=new Set(); for(const [playerId,line] of Object.entries(match.lineup||{})){ if(!map[playerId]&&state.team.players?.[playerId]) map[playerId]={id:playerId,name:state.team.players[playerId].name,matches:0,minutes:0,goals:0,assists:0,contribution:0}; if(!map[playerId]) continue; let minutes=Math.round(Number(line.totalMs||0)/60000); if(line.onField&&line.startedAtMs!=null){ const elapsed=Number(match.timer?.accumulatedMs||0); minutes += Math.round(Math.max(0, elapsed-Number(line.startedAtMs||elapsed))/60000); } map[playerId].minutes += minutes; if(line.selected&&!counted.has(playerId)){ map[playerId].matches += 1; counted.add(playerId); } } for(const ev of Object.values(match.events||{})){ if(ev.playerId&&map[ev.playerId]){ if(ev.type==='goal') map[ev.playerId].goals +=1; if(ev.type==='assist') map[ev.playerId].assists +=1; } if(ev.secondaryPlayerId&&map[ev.secondaryPlayerId]&&ev.type==='goal') map[ev.secondaryPlayerId].assists +=1; } } Object.values(map).forEach(v=>v.contribution=v.goals*5+v.assists*3+Math.round(v.minutes/10)+v.matches*2); return map; }
 
-    function computeSeasonStats() {
-      const players = getPlayersArray();
-      const map = {};
-      players.forEach(p => map[p.id] = { id:p.id, name:p.name, matches:0, minutes:0, goals:0, assists:0, saves:0, chances:0, contribution:0 });
-      for (const match of getMatchesArray()) {
-        const counted = new Set();
-        for (const [playerId, line] of Object.entries(match.lineup || {})) {
-          if (!map[playerId] && state.team.players?.[playerId]) {
-            map[playerId] = { id:playerId, name:state.team.players[playerId].name, matches:0, minutes:0, goals:0, assists:0, saves:0, chances:0, contribution:0 };
-          }
-          if (!map[playerId]) continue;
-          let minutes = Math.round(Number(line.totalMs || 0) / 60000);
-          if (line.onField && line.startedAtMs != null) {
-            const elapsed = Number(match.timer?.accumulatedMs || 0);
-            minutes += Math.round(Math.max(0, elapsed - Number(line.startedAtMs || elapsed)) / 60000);
-          }
-          map[playerId].minutes += minutes;
-          if (line.selected && !counted.has(playerId)) {
-            map[playerId].matches += 1;
-            counted.add(playerId);
-          }
-        }
-        for (const ev of Object.values(match.events || {})) {
-          if (ev.playerId && map[ev.playerId]) {
-            if (ev.type === 'goal') map[ev.playerId].goals += 1;
-            if (ev.type === 'assist') map[ev.playerId].assists += 1;
-          }
-          if (ev.secondaryPlayerId && map[ev.secondaryPlayerId] && ev.type === 'goal') {
-            map[ev.secondaryPlayerId].assists += 1;
-          }
-        }
-      }
-      Object.values(map).forEach(v => { v.contribution = v.goals * 5 + v.assists * 3 + Math.round(v.minutes / 10) + v.matches * 2; });
-      return map;
-    }
+    function badgeClassFromStatus(status){ if(status==='Tilgjengelig') return ''; if(status==='Usikker') return 'warn'; return 'danger'; }
+    function renderHeader(){ $('teamNameTitle').textContent=state.team?.info?.name||'Mitt lag'; $('teamMeta').textContent=[state.team?.info?.ageGroup, state.team?.info?.season ? 'Sesong '+state.team.info.season : ''].filter(Boolean).join(' • ')||'Sett opp laget ditt'; }
+    function renderHome(){ const players=getPlayersArray(); const matches=getMatchesArray(); $('homeTotalPlayers').textContent=players.length; $('homeTotalMatches').textContent=matches.length; const stats=computeSeasonStats(); const top=Object.values(stats).sort((a,b)=>b.goals-a.goals)[0]; const min=Object.values(stats).sort((a,b)=>b.minutes-a.minutes)[0]; $('homeTopScorer').textContent=top?`${top.name} (${top.goals})`:'-'; $('homeMostMinutes').textContent=min?`${min.name} (${min.minutes} min)`:'-'; }
+    function renderTeam(){ $('teamNameInput').value=state.team?.info?.name||''; $('teamSeasonInput').value=state.team?.info?.season||''; $('teamAgeGroupInput').value=state.team?.info?.ageGroup||''; $('teamDefaultFormationInput').value=state.team?.info?.defaultFormation||''; const players=getPlayersArray(); $('playerCountPill').textContent=`${players.length} spillere`; $('playersList').innerHTML=players.length?players.map(p=>`<div class="player-item"><div><strong>#${p.number||'-'} ${escapeHtml(p.name||'')}</strong><div class="muted tiny">${escapeHtml(p.position||'Utespiller')}</div><span class="badge ${badgeClassFromStatus(p.status)}">${escapeHtml(p.status||'Tilgjengelig')}</span></div><div style="display:flex;gap:8px;flex-direction:column;min-width:90px;"><button class="small secondary" onclick="window.appActions.togglePlayerStatus('${p.id}')">Status</button><button class="small danger" onclick="window.appActions.deletePlayer('${p.id}')">Slett</button></div></div>`).join(''):'<div class="empty">Ingen spillere ennå</div>'; }
+    function renderSimpleSub(match){ $('simpleSubCard').classList.toggle('hidden',!match); if(!match) return; const players=getPlayersArray(); const lineup=match.lineup||{}; const onField=players.filter(p=>lineup[p.id]?.selected&&lineup[p.id]?.onField); const bench=players.filter(p=>lineup[p.id]?.selected&&!lineup[p.id]?.onField); $('subSelectionPill').textContent=state.simpleSub.outId?'Velg spiller INN':'Velg spiller UT'; $('onFieldList').innerHTML=onField.length?onField.map(p=>`<div class="player-chip ${state.simpleSub.outId===p.id?'selected':''}" onclick="window.appActions.pickSubOut('${p.id}')"><span>#${p.number||'-'} ${escapeHtml(p.name||'')}</span><span class="badge gray">UT</span></div>`).join(''):'<div class="empty">Ingen registrert på banen</div>'; $('benchList').innerHTML=bench.length?bench.map(p=>`<div class="player-chip ${state.simpleSub.inId===p.id?'selected':''}" onclick="window.appActions.pickSubIn('${p.id}')"><span>#${p.number||'-'} ${escapeHtml(p.name||'')}</span><span class="badge gray">INN</span></div>`).join(''):'<div class="empty">Ingen på benken</div>'; }
+    function renderLineup(match){ const players=getPlayersArray(); const selected=match.lineup||{}; $('lineupPill').textContent=`${Object.keys(selected).length} valgt`; $('lineupList').innerHTML=players.map(p=>{ const sel=selected[p.id]||{}; return `<div class="player-item"><div><strong>#${p.number||'-'} ${escapeHtml(p.name||'')}</strong><div class="muted tiny">${escapeHtml(p.position||'Utespiller')} • ${escapeHtml(p.status||'Tilgjengelig')}</div></div><div style="display:grid;gap:6px;min-width:140px;"><label class="tiny"><input type="checkbox" ${sel.selected?'checked':''} onchange="window.appActions.toggleLineup('${p.id}', this.checked, null)" /> Kampstall</label><label class="tiny"><input type="checkbox" ${sel.onField?'checked':''} onchange="window.appActions.toggleLineup('${p.id}', null, this.checked)" /> På banen</label></div></div>`; }).join('')||'<div class="empty">Ingen spillere i laget</div>'; }
+    function eventLabel(type){ return ({goal:'Mål',goalAgainst:'Mål imot',assist:'Assist',sub:'Bytte',pause:'Pause',secondHalf:'2. omgang',note:'Notat',chance:'Stor sjanse',save:'Redning'})[type]||type; }
+    function populateEventPlayerSelects(match){ const players=getPlayersArray(); const lineupIds=Object.entries(match.lineup||{}).filter(([,v])=>v.selected).map(([id])=>id); const lineupPlayers=players.filter(p=>lineupIds.includes(p.id)); const opts=['<option value="">Velg spiller</option>'].concat(lineupPlayers.map(p=>`<option value="${p.id}">#${p.number||'-'} ${escapeHtml(p.name||'')}</option>`)).join(''); $('eventPlayerInput').innerHTML=opts; $('eventSecondaryPlayerInput').innerHTML='<option value="">Evt. spiller 2</option>'+lineupPlayers.map(p=>`<option value="${p.id}">#${p.number||'-'} ${escapeHtml(p.name||'')}</option>`).join(''); }
+    function renderEvents(match){ const events=Object.entries(match.events||{}).map(([id,e])=>({id,...e})).sort((a,b)=>(b.sortAt||0)-(a.sortAt||0)); $('eventsList').innerHTML=events.length?events.map(ev=>`<div class="event-item"><div><strong>${eventLabel(ev.type)} <span class="badge gray">${escapeHtml(ev.displayMinute||'-')}</span></strong><div class="muted tiny">${escapeHtml(ev.playerName||'')}${ev.secondaryPlayerName ? ' → ' + escapeHtml(ev.secondaryPlayerName) : ''}</div>${ev.note?`<div>${escapeHtml(ev.note)}</div>`:''}</div><button class="small danger" onclick="window.appActions.deleteEvent('${ev.id}')">Slett</button></div>`).join(''):'<div class="empty">Ingen hendelser registrert ennå</div>'; }
+    function renderMatch(){ const activeMatch=getActiveMatch(); state.activeMatch=activeMatch; ['activeMatchCard','lineupCard','simpleSubCard','eventControlsCard','eventsCard'].forEach(id=>$(id).classList.toggle('hidden',!activeMatch)); const dt=new Date(); const localValue=new Date(dt.getTime()-dt.getTimezoneOffset()*60000).toISOString().slice(0,16); if(!$('matchDateInput').value) $('matchDateInput').value=localValue; if(!activeMatch) return; $('activeMatchTitle').textContent=`${state.team?.info?.name||'Laget'} vs ${activeMatch.opponent||'Motstander'}`; $('activeMatchMeta').textContent=[activeMatch.venue,activeMatch.competition].filter(Boolean).join(' • ')||'-'; $('scoreHomeTeam').textContent=state.team?.info?.name||'Laget'; $('scoreAwayTeam').textContent=activeMatch.opponent||'Motstander'; $('scoreHome').textContent=activeMatch.scoreFor||0; $('scoreAway').textContent=activeMatch.scoreAgainst||0; $('periodPill').textContent=activeMatch.period||'1. omgang'; $('matchStatePill').textContent=activeMatch.status||'Klar'; updateTimerDisplay(); renderLineup(activeMatch); renderSimpleSub(activeMatch); renderEvents(activeMatch); populateEventPlayerSelects(activeMatch); }
+    function buildMatchSummary(match){ if(!match) return '<div class="empty">Ingen kamp valgt</div>'; const events=Object.values(match.events||{}).sort((a,b)=>(a.elapsedMs||0)-(b.elapsedMs||0)); const goals=events.filter(e=>e.type==='goal').length; const against=events.filter(e=>e.type==='goalAgainst').length; const stats=Object.values(computeSeasonStats()).sort((a,b)=>b.contribution-a.contribution); const standout=stats[0]?.name||'ingen ennå'; const timeline=events.slice(0,12).map(e=>`<li><strong>${escapeHtml(e.displayMinute||'-')}</strong> – ${escapeHtml(eventLabel(e.type))}${e.playerName ? ' • ' + escapeHtml(e.playerName) : ''}${e.secondaryPlayerName ? ' → ' + escapeHtml(e.secondaryPlayerName) : ''}${e.note ? ' (' + escapeHtml(e.note) + ')' : ''}</li>`).join(''); return `<p><strong>${escapeHtml(state.team?.info?.name||'Laget')}</strong> spilte mot <strong>${escapeHtml(match.opponent||'Motstander')}</strong>. Sluttresultatet ble <strong>${match.scoreFor||0}-${match.scoreAgainst||0}</strong>.</p><p>Laget skapte ${goals} scoringer og slapp inn ${against}.</p><p><strong>Dagens nøkkelspiller:</strong> ${escapeHtml(standout)}.</p><ol style="padding-left:18px;">${timeline||'<li>Ingen hendelser registrert.</li>'}</ol>`; }
+    function renderReports(){ $('reportContent').innerHTML=buildMatchSummary(state.activeMatch||getMatchesArray()[0]||null); const stats=computeSeasonStats(); $('seasonStatsList').innerHTML=Object.values(stats).sort((a,b)=>b.contribution-a.contribution||b.minutes-a.minutes).map(s=>`<div class="player-item"><div><strong>${escapeHtml(s.name)}</strong><div class="muted tiny">Kamper ${s.matches} • Minutter ${s.minutes} • Mål ${s.goals} • Assist ${s.assists}</div></div><div class="badge">Bidrag ${s.contribution}</div></div>`).join('')||'<div class="empty">Ingen sesongdata ennå</div>'; }
+    function renderAll(){ renderHome(); renderTeam(); renderMatch(); renderReports(); renderHeader(); }
 
-    function renderAll() {
-      renderHome();
-      renderTeam();
-      renderMatch();
-      renderReports();
-      renderHeader();
-    }
+    async function saveTeamInfo(){ const info={name:$('teamNameInput').value.trim()||'Hof G11',season:$('teamSeasonInput').value.trim()||'2026',ageGroup:$('teamAgeGroupInput').value.trim()||'G11',defaultFormation:$('teamDefaultFormationInput').value.trim()||'7er',updatedAt:Date.now()}; await update(ref(state.db, `teams/${state.teamId}/info`), info); setSync('Lagret'); }
+    async function addPlayer(){ const name=$('playerNameInput').value.trim(); if(!name) return alert('Skriv navn på spiller'); const newRef=push(ref(state.db, `teams/${state.teamId}/players`)); await set(newRef,{name,number:$('playerNumberInput').value?Number($('playerNumberInput').value):null,position:$('playerPositionInput').value,status:$('playerStatusInput').value,createdAt:Date.now()}); $('playerNameInput').value=''; $('playerNumberInput').value=''; setSync('Spiller lagret'); }
+    async function addSamplePlayers(){ for(const [name,number,position] of samplePlayers){ const newRef=push(ref(state.db, `teams/${state.teamId}/players`)); await set(newRef,{name,number,position,status:'Tilgjengelig',createdAt:Date.now()+number}); } setSync('Eksempelspillere lagt inn'); }
+    async function togglePlayerStatus(playerId){ const player=state.team.players[playerId]; if(!player) return; const order=['Tilgjengelig','Usikker','Skadet','Borte']; const next=order[(order.indexOf(player.status||'Tilgjengelig')+1)%order.length]; await update(ref(state.db, `teams/${state.teamId}/players/${playerId}`), {status:next}); }
+    async function deletePlayer(playerId){ if(!confirm('Slette spiller?')) return; await remove(ref(state.db, `teams/${state.teamId}/players/${playerId}`)); }
+    async function createMatch(){ const opponent=$('matchOpponentInput').value.trim(); if(!opponent) return alert('Skriv inn motstander'); const newRef=push(ref(state.db, `teams/${state.teamId}/matches`)); await set(newRef,{opponent,venue:$('matchVenueInput').value.trim(),competition:$('matchCompetitionInput').value.trim(),matchDate:$('matchDateInput').value||null,lengthMinutes:Number($('matchLengthInput').value||60),playersOnField:Number($('playersOnFieldInput').value||7),status:'Klar',period:'1. omgang',scoreFor:0,scoreAgainst:0,timer:{startedAt:null,pausedAt:null,accumulatedMs:0,running:false},lineup:{},events:{},notes:'',createdAt:Date.now(),createdBy:state.user.uid,archived:false}); state.activeMatchId=newRef.key; setScreen('match'); setSync('Kamp opprettet'); }
+    async function loadLastLineup(){ const matches=getMatchesArray().filter(m=>m.id!==state.activeMatchId&&m.lineup); if(!matches.length) return alert('Fant ingen tidligere kampoppsett'); if(!state.activeMatchId) return alert('Opprett en kamp først'); await update(ref(state.db, `teams/${state.teamId}/matches/${state.activeMatchId}/lineup`), matches[0].lineup||{}); setSync('Sist oppsett lastet'); }
+    async function toggleLineup(playerId, selectedValue, onFieldValue){ const match=getActiveMatch(); if(!match) return; const current=match.lineup?.[playerId]||{selected:false,onField:false,startedAtMs:null,totalMs:0}; const next={...current}; if(selectedValue!==null) next.selected=selectedValue; if(onFieldValue!==null){ const now=getElapsedMs(match); if(onFieldValue&&!current.onField){ next.onField=true; next.startedAtMs=now; } else if(!onFieldValue&&current.onField){ next.onField=false; next.totalMs=Number(next.totalMs||0)+Math.max(0, now-Number(current.startedAtMs||now)); next.startedAtMs=null; } } if(!next.selected){ next.onField=false; next.startedAtMs=null; } await set(ref(state.db, `teams/${state.teamId}/matches/${match.id}/lineup/${playerId}`), next); }
+    async function kickoff(){ const match=getActiveMatch(); if(!match||match.timer?.running) return; await update(ref(state.db, `teams/${state.teamId}/matches/${match.id}`), {status:'Pågår','timer/startedAt':Date.now(),'timer/running':true,'timer/pausedAt':null}); await addEvent('note',null,null,'Kampstart'); startTimer(); }
+    async function pauseToggle(){ const match=getActiveMatch(); if(!match) return; if(match.timer?.running){ const elapsed=getElapsedMs(match); await update(ref(state.db, `teams/${state.teamId}/matches/${match.id}`), {status:'Pause','timer/accumulatedMs':elapsed,'timer/running':false,'timer/pausedAt':Date.now(),'timer/startedAt':null}); await addEvent('pause',null,null,'Pause'); clearTimer(); } else { await update(ref(state.db, `teams/${state.teamId}/matches/${match.id}`), {status:'Pågår','timer/startedAt':Date.now(),'timer/running':true,'timer/pausedAt':null}); await addEvent('note',null,null,'Spillet startet igjen'); startTimer(); } }
+    async function secondHalf(){ const match=getActiveMatch(); if(!match) return; await update(ref(state.db, `teams/${state.teamId}/matches/${match.id}`), {period:'2. omgang',status:'Pågår'}); await addEvent('secondHalf',null,null,'2. omgang startet'); if(!(match.timer||{}).running) await update(ref(state.db, `teams/${state.teamId}/matches/${match.id}`), {'timer/startedAt':Date.now(),'timer/running':true,'timer/pausedAt':null}); startTimer(); }
+    async function endMatch(){ const match=getActiveMatch(); if(!match) return; const finalElapsed=getElapsedMs(match); const lineup={...(match.lineup||{})}; for(const [playerId,item] of Object.entries(lineup)){ if(item.onField){ item.totalMs=Number(item.totalMs||0)+Math.max(0, finalElapsed-Number(item.startedAtMs||finalElapsed)); item.startedAtMs=null; item.onField=false; } } await update(ref(state.db, `teams/${state.teamId}/matches/${match.id}`), {status:'Slutt',archived:true,endedAt:Date.now(),lineup,'timer/accumulatedMs':finalElapsed,'timer/running':false,'timer/startedAt':null,'timer/pausedAt':Date.now()}); await addEvent('note',null,null,'Kampslutt'); clearTimer(); setScreen('report'); }
+    function openEventEditor(type=null){ $('eventEditor').classList.remove('hidden'); if(type) $('eventTypeInput').value=type; $('eventPlayerInput').value=''; $('eventSecondaryPlayerInput').value=''; $('eventNoteInput').value=''; }
+    async function addEvent(type, playerId, secondaryPlayerId, note=''){ const match=getActiveMatch(); if(!match) return; const players=state.team.players||{}; const elapsed=getElapsedMs(match); const newRef=push(ref(state.db, `teams/${state.teamId}/matches/${match.id}/events`)); const obj={type,playerId,playerName:playerId&&players[playerId]?players[playerId].name:'',secondaryPlayerId,secondaryPlayerName:secondaryPlayerId&&players[secondaryPlayerId]?players[secondaryPlayerId].name:'',note,sortAt:Date.now(),elapsedMs:elapsed,displayMinute:formatMinute(elapsed),createdBy:state.user.uid,createdAt:Date.now()}; await set(newRef,obj); const updates={}; if(type==='goal') updates['scoreFor']=Number(match.scoreFor||0)+1; if(type==='goalAgainst') updates['scoreAgainst']=Number(match.scoreAgainst||0)+1; if(type==='sub'&&playerId&&secondaryPlayerId){ const now=elapsed; const out=match.lineup?.[playerId]||{selected:true,onField:true,totalMs:0,startedAtMs:0}; const incoming=match.lineup?.[secondaryPlayerId]||{selected:true,onField:false,totalMs:0,startedAtMs:null}; out.onField=false; out.totalMs=Number(out.totalMs||0)+Math.max(0, now-Number(out.startedAtMs||now)); out.startedAtMs=null; incoming.selected=true; incoming.onField=true; incoming.startedAtMs=now; updates[`lineup/${playerId}`]=out; updates[`lineup/${secondaryPlayerId}`]=incoming; } if(Object.keys(updates).length) await update(ref(state.db, `teams/${state.teamId}/matches/${match.id}`), updates); }
+    async function saveEventFromEditor(){ const type=$('eventTypeInput').value; const playerId=$('eventPlayerInput').value||null; const secondaryPlayerId=$('eventSecondaryPlayerInput').value||null; const note=$('eventNoteInput').value.trim(); if(['goal','assist','sub','save','chance'].includes(type)&&!playerId) return alert('Velg spiller'); await addEvent(type,playerId,secondaryPlayerId,note); $('eventEditor').classList.add('hidden'); }
+    async function deleteEvent(eventId){ const match=getActiveMatch(); if(!match) return; if(!confirm('Slette hendelse?')) return; const ev=match.events?.[eventId]; await remove(ref(state.db, `teams/${state.teamId}/matches/${match.id}/events/${eventId}`)); if(ev?.type==='goal') await update(ref(state.db, `teams/${state.teamId}/matches/${match.id}`), {scoreFor:Math.max(0, Number(match.scoreFor||0)-1)}); if(ev?.type==='goalAgainst') await update(ref(state.db, `teams/${state.teamId}/matches/${match.id}`), {scoreAgainst:Math.max(0, Number(match.scoreAgainst||0)-1)}); }
+    async function reverseLastEvent(){ const match=getActiveMatch(); if(!match?.events) return; const latest=Object.entries(match.events).map(([id,e])=>({id,...e})).sort((a,b)=>(b.sortAt||0)-(a.sortAt||0))[0]; if(latest) await deleteEvent(latest.id); }
+    function pickSubOut(playerId){ state.simpleSub.outId=state.simpleSub.outId===playerId?null:playerId; state.simpleSub.inId=null; renderSimpleSub(getActiveMatch()); }
+    async function pickSubIn(playerId){ if(!state.simpleSub.outId){ alert('Velg først spilleren som skal UT.'); return; } state.simpleSub.inId=playerId; const outId=state.simpleSub.outId; const inId=state.simpleSub.inId; await addEvent('sub',outId,inId,'Enkelt bytte'); state.simpleSub={outId:null,inId:null}; renderMatch(); setSync('Bytte lagret'); }
+    function resetSimpleSub(){ state.simpleSub={outId:null,inId:null}; renderSimpleSub(getActiveMatch()); }
+    function exportCsv(){ const stats=Object.values(computeSeasonStats()); if(!stats.length) return alert('Ingen data å eksportere'); const rows=[['Spiller','Kamper','Minutter','Mål','Assist','Bidrag'],...stats.map(s=>[s.name,s.matches,s.minutes,s.goals,s.assists,s.contribution])]; const csv=rows.map(r=>r.map(v=>`"${String(v).replaceAll('"','""')}"`).join(';')).join('\n'); const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='sesongrapport.csv'; a.click(); URL.revokeObjectURL(url); }
+    function printReport(){ window.print(); }
+    async function saveProfile(){ const obj={name:$('profileNameInput').value.trim(),phone:$('profilePhoneInput').value.trim(),teamId:state.teamId||'hof-g11',email:state.user.email||'',updatedAt:Date.now()}; await set(ref(state.db, `users/${state.user.uid}`),obj); if(state.user.displayName!==obj.name&&obj.name){ try{ await updateProfile(state.user,{displayName:obj.name}); }catch{} } setSync('Profil lagret'); }
+    function fillDemoAuth(){ $('loginEmail').value='trener@example.com'; $('loginPassword').value='Password123!'; $('registerEmail').value='trener@example.com'; $('registerPassword').value='Password123!'; $('registerName').value='Trener Test'; $('registerTeamId').value='hof-g11'; $('firebaseConfigInput').value=JSON.stringify(defaultConfig,null,2); }
 
-    function renderHeader() {
-      $('teamNameTitle').textContent = state.team?.info?.name || 'Mitt lag';
-      $('teamMeta').textContent = [state.team?.info?.ageGroup, state.team?.info?.season ? 'Sesong ' + state.team.info.season : ''].filter(Boolean).join(' • ') || 'Sett opp laget ditt';
-    }
+    function bindUI(){ document.querySelectorAll('[data-nav]').forEach(btn=>btn.addEventListener('click',()=>setScreen(btn.dataset.nav))); $('btnShowRegister').onclick=()=>$('registerCard').classList.remove('hidden'); $('btnCancelRegister').onclick=()=>$('registerCard').classList.add('hidden'); $('btnDemoMode').onclick=fillDemoAuth; $('btnLogin').onclick=async()=>{ try{ await signInWithEmailAndPassword(state.auth,$('loginEmail').value.trim(),$('loginPassword').value); }catch(err){ alert('Innlogging feilet: '+err.message); } }; $('btnRegister').onclick=async()=>{ try{ const email=$('registerEmail').value.trim(); const password=$('registerPassword').value; const name=$('registerName').value.trim(); const teamId=$('registerTeamId').value.trim()||'hof-g11'; const cred=await createUserWithEmailAndPassword(state.auth,email,password); await updateProfile(cred.user,{displayName:name}); await set(ref(state.db, `users/${cred.user.uid}`), {name,email,teamId,createdAt:Date.now()}); $('registerCard').classList.add('hidden'); alert('Bruker opprettet. TeamId ble satt til '+teamId+'.'); }catch(err){ alert('Registrering feilet: '+err.message); } }; $('btnResetPassword').onclick=async()=>{ const email=$('loginEmail').value.trim(); if(!email) return alert('Skriv inn e-post først'); try{ await sendPasswordResetEmail(state.auth,email); alert('Tilbakestilling sendt'); }catch(err){ alert('Kunne ikke sende e-post: '+err.message); } }; $('btnSaveTeam').onclick=saveTeamInfo; $('btnLoadSamplePlayers').onclick=addSamplePlayers; $('btnAddPlayer').onclick=addPlayer; $('btnReloadPlayers').onclick=renderTeam; $('btnCreateMatch').onclick=createMatch; $('btnLoadLastLineup').onclick=loadLastLineup; $('btnKickoff').onclick=kickoff; $('btnPauseToggle').onclick=pauseToggle; $('btnSecondHalf').onclick=secondHalf; $('btnEndMatch').onclick=endMatch; $('btnQuickGoal').onclick=()=>openEventEditor('goal'); $('btnQuickAgainst').onclick=()=>openEventEditor('goalAgainst'); $('btnQuickSub').onclick=()=>openEventEditor('sub'); $('btnQuickNote').onclick=()=>openEventEditor('note'); $('btnSaveEvent').onclick=saveEventFromEditor; $('btnCancelEvent').onclick=()=>$('eventEditor').classList.add('hidden'); $('btnReverseLastEvent').onclick=reverseLastEvent; $('btnCancelSimpleSub').onclick=resetSimpleSub; $('btnGenerateMatchReport').onclick=()=>{ $('reportContent').innerHTML=buildMatchSummary(getActiveMatch()||getMatchesArray()[0]||null); $('reportStatusPill').textContent='Kamprapport klar'; }; $('btnGenerateSeasonReport').onclick=()=>{ renderReports(); $('reportStatusPill').textContent='Sesongrapport klar'; }; $('btnPrintReport').onclick=printReport; $('btnExportCsv').onclick=exportCsv; $('btnSaveProfile').onclick=saveProfile; $('btnLogout').onclick=async()=>{ await signOut(state.auth); }; $('btnSaveFirebaseConfig').onclick=()=>{ try{ const cfg=JSON.parse($('firebaseConfigInput').value); saveCfg(cfg); alert('Firebase-config lagret lokalt. Last siden på nytt.'); }catch(err){ alert('Ugyldig JSON: '+err.message); } }; $('btnClearFirebaseConfig').onclick=()=>{ localStorage.removeItem('lagleder.firebaseConfig'); $('firebaseConfigInput').value=JSON.stringify(defaultConfig,null,2); }; }
 
-    function renderHome() {
-      const players = getPlayersArray();
-      const matches = getMatchesArray();
-      $('homeTotalPlayers').textContent = players.length;
-      $('homeTotalMatches').textContent = matches.length;
-      const stats = computeSeasonStats();
-      const top = Object.values(stats).sort((a,b) => b.goals - a.goals)[0];
-      const min = Object.values(stats).sort((a,b) => b.minutes - a.minutes)[0];
-      $('homeTopScorer').textContent = top ? `${top.name} (${top.goals})` : '-';
-      $('homeMostMinutes').textContent = min ? `${min.name} (${min.minutes} min)` : '-';
-    }
-
-    function badgeClassFromStatus(status) {
-      if (status === 'Tilgjengelig') return '';
-      if (status === 'Usikker') return 'warn';
-      return 'danger';
-    }
-
-    function renderTeam() {
-      $('teamNameInput').value = state.team?.info?.name || '';
-      $('teamSeasonInput').value = state.team?.info?.season || '';
-      $('teamAgeGroupInput').value = state.team?.info?.ageGroup || '';
-      $('teamDefaultFormationInput').value = state.team?.info?.defaultFormation || '';
-      const players = getPlayersArray();
-      $('playerCountPill').textContent = `${players.length} spillere`;
-      $('playersList').innerHTML = players.length
-        ? players.map(p => `<div class="player-item"><div><strong>#${p.number||'-'} ${escapeHtml(p.name||'')}</strong><div class="muted tiny">${escapeHtml(p.position||'Utespiller')}</div><span class="badge ${badgeClassFromStatus(p.status)}">${escapeHtml(p.status||'Tilgjengelig')}</span></div><div style="display:flex;gap:8px;flex-direction:column;min-width:90px;"><button class="small secondary" onclick="window.appActions.togglePlayerStatus('${p.id}')">Status</button><button class="small danger" onclick="window.appActions.deletePlayer('${p.id}')">Slett</button></div></div>`).join('')
-        : '<div class="empty">Ingen spillere ennå</div>';
-    }
-
-    function renderSimpleSub(match) {
-      $('simpleSubCard').classList.toggle('hidden', !match);
-      if (!match) return;
-      const players = getPlayersArray();
-      const lineup = match.lineup || {};
-      const onField = players.filter(p => lineup[p.id]?.selected && lineup[p.id]?.onField);
-      const bench = players.filter(p => lineup[p.id]?.selected && !lineup[p.id]?.onField);
-      $('subSelectionPill').textContent = state.simpleSub.outId ? 'Velg spiller INN' : 'Velg spiller UT';
-      $('onFieldList').innerHTML = onField.length
-        ? onField.map(p => `<div class="player-chip ${state.simpleSub.outId===p.id?'selected':''}" onclick="window.appActions.pickSubOut('${p.id}')"><span>#${p.number||'-'} ${escapeHtml(p.name||'')}</span><span class="badge gray">UT</span></div>`).join('')
-        : '<div class="empty">Ingen registrert på banen</div>';
-      $('benchList').innerHTML = bench.length
-        ? bench.map(p => `<div class="player-chip ${state.simpleSub.inId===p.id?'selected':''}" onclick="window.appActions.pickSubIn('${p.id}')"><span>#${p.number||'-'} ${escapeHtml(p.name||'')}</span><span class="badge gray">INN</span></div>`).join('')
-        : '<div class="empty">Ingen på benken</div>';
-    }
-
-    function renderLineup(match) {
-      const players = getPlayersArray();
-      const selected = match.lineup || {};
-      $('lineupPill').textContent = `${Object.keys(selected).length} valgt`;
-      $('lineupList').innerHTML = players.map(p => {
-        const sel = selected[p.id] || {};
-        return `<div class="player-item"><div><strong>#${p.number||'-'} ${escapeHtml(p.name||'')}</strong><div class="muted tiny">${escapeHtml(p.position||'Utespiller')} • ${escapeHtml(p.status||'Tilgjengelig')}</div></div><div style="display:grid;gap:6px;min-width:140px;"><label class="tiny"><input type="checkbox" ${sel.selected?'checked':''} onchange="window.appActions.toggleLineup('${p.id}', this.checked, null)" /> Kampstall</label><label class="tiny"><input type="checkbox" ${sel.onField?'checked':''} onchange="window.appActions.toggleLineup('${p.id}', null, this.checked)" /> På banen</label></div></div>`;
-      }).join('') || '<div class="empty">Ingen spillere i laget</div>';
-    }
-
-    function eventLabel(type) {
-      return ({ goal:'Mål', goalAgainst:'Mål imot', assist:'Assist', sub:'Bytte', pause:'Pause', secondHalf:'2. omgang', note:'Notat', chance:'Stor sjanse', save:'Redning' })[type] || type;
-    }
-
-    function populateEventPlayerSelects(match) {
-      const players = getPlayersArray();
-      const lineupIds = Object.entries(match.lineup || {}).filter(([,v]) => v.selected).map(([id]) => id);
-      const lineupPlayers = players.filter(p => lineupIds.includes(p.id));
-      const opts = ['<option value="">Velg spiller</option>'].concat(lineupPlayers.map(p => `<option value="${p.id}">#${p.number||'-'} ${escapeHtml(p.name||'')}</option>`)).join('');
-      $('eventPlayerInput').innerHTML = opts;
-      $('eventSecondaryPlayerInput').innerHTML = '<option value="">Evt. spiller 2</option>' + lineupPlayers.map(p => `<option value="${p.id}">#${p.number||'-'} ${escapeHtml(p.name||'')}</option>`).join('');
-    }
-
-    function renderEvents(match) {
-      const events = Object.entries(match.events || {}).map(([id,e]) => ({id,...e})).sort((a,b) => (b.sortAt||0) - (a.sortAt||0));
-      $('eventsList').innerHTML = events.length
-        ? events.map(ev => `<div class="event-item"><div><strong>${eventLabel(ev.type)} <span class="badge gray">${escapeHtml(ev.displayMinute||'-')}</span></strong><div class="muted tiny">${escapeHtml(ev.playerName||'')}${ev.secondaryPlayerName ? ' → ' + escapeHtml(ev.secondaryPlayerName) : ''}</div>${ev.note ? `<div>${escapeHtml(ev.note)}</div>` : ''}</div><button class="small danger" onclick="window.appActions.deleteEvent('${ev.id}')">Slett</button></div>`).join('')
-        : '<div class="empty">Ingen hendelser registrert ennå</div>';
-    }
-
-    function renderMatch() {
-      const activeMatch = getActiveMatch();
-      state.activeMatch = activeMatch;
-      ['activeMatchCard','lineupCard','simpleSubCard','eventControlsCard','eventsCard'].forEach(id => $(id).classList.toggle('hidden', !activeMatch));
-      const dt = new Date();
-      const localValue = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000).toISOString().slice(0,16);
-      if (!$('matchDateInput').value) $('matchDateInput').value = localValue;
-      if (!activeMatch) return;
-      $('activeMatchTitle').textContent = `${state.team?.info?.name || 'Laget'} vs ${activeMatch.opponent || 'Motstander'}`;
-      $('activeMatchMeta').textContent = [activeMatch.venue, activeMatch.competition].filter(Boolean).join(' • ') || '-';
-      $('scoreHomeTeam').textContent = state.team?.info?.name || 'Laget';
-      $('scoreAwayTeam').textContent = activeMatch.opponent || 'Motstander';
-      $('scoreHome').textContent = activeMatch.scoreFor || 0;
-      $('scoreAway').textContent = activeMatch.scoreAgainst || 0;
-      $('periodPill').textContent = activeMatch.period || '1. omgang';
-      $('matchStatePill').textContent = activeMatch.status || 'Klar';
-      updateTimerDisplay();
-      renderLineup(activeMatch);
-      renderSimpleSub(activeMatch);
-      renderEvents(activeMatch);
-      populateEventPlayerSelects(activeMatch);
-    }
-
-    function buildMatchSummary(match) {
-      if (!match) return '<div class="empty">Ingen kamp valgt</div>';
-      const events = Object.values(match.events || {}).sort((a,b) => (a.elapsedMs||0)-(b.elapsedMs||0));
-      const goals = events.filter(e => e.type === 'goal').length;
-      const against = events.filter(e => e.type === 'goalAgainst').length;
-      const stats = Object.values(computeSeasonStats()).sort((a,b) => b.contribution - a.contribution);
-      const standout = stats[0]?.name || 'ingen ennå';
-      const timeline = events.slice(0,12).map(e => `<li><strong>${escapeHtml(e.displayMinute||'-')}</strong> – ${escapeHtml(eventLabel(e.type))}${e.playerName ? ' • ' + escapeHtml(e.playerName) : ''}${e.secondaryPlayerName ? ' → ' + escapeHtml(e.secondaryPlayerName) : ''}${e.note ? ' (' + escapeHtml(e.note) + ')' : ''}</li>`).join('');
-      return `<p><strong>${escapeHtml(state.team?.info?.name || 'Laget')}</strong> spilte mot <strong>${escapeHtml(match.opponent || 'Motstander')}</strong>. Sluttresultatet ble <strong>${match.scoreFor||0}-${match.scoreAgainst||0}</strong>.</p><p>Laget skapte ${goals} scoringer og slapp inn ${against}.</p><p><strong>Dagens nøkkelspiller:</strong> ${escapeHtml(standout)}.</p><ol style="padding-left:18px;">${timeline || '<li>Ingen hendelser registrert.</li>'}</ol>`;
-    }
-
-    function renderReports() {
-      $('reportContent').innerHTML = buildMatchSummary(state.activeMatch || getMatchesArray()[0] || null);
-      const stats = computeSeasonStats();
-      $('seasonStatsList').innerHTML = Object.values(stats).sort((a,b) => b.contribution - a.contribution || b.minutes - a.minutes)
-        .map(s => `<div class="player-item"><div><strong>${escapeHtml(s.name)}</strong><div class="muted tiny">Kamper ${s.matches} • Minutter ${s.minutes} • Mål ${s.goals} • Assist ${s.assists}</div></div><div class="badge">Bidrag ${s.contribution}</div></div>`).join('')
-        || '<div class="empty">Ingen sesongdata ennå</div>';
-    }
-
-    async function saveTeamInfo() {
-      const info = {
-        name: $('teamNameInput').value.trim() || 'Hof G11',
-        season: $('teamSeasonInput').value.trim() || '2026',
-        ageGroup: $('teamAgeGroupInput').value.trim() || 'G11',
-        defaultFormation: $('teamDefaultFormationInput').value.trim() || '7er',
-        updatedAt: Date.now()
-      };
-      await update(ref(state.db, `teams/${state.teamId}/info`), info);
-      setSync('Lagret');
-    }
-
-    async function addPlayer() {
-      const name = $('playerNameInput').value.trim();
-      if (!name) return alert('Skriv navn på spiller');
-      const newRef = push(ref(state.db, `teams/${state.teamId}/players`));
-      await set(newRef, { name, number: $('playerNumberInput').value ? Number($('playerNumberInput').value) : null, position: $('playerPositionInput').value, status: $('playerStatusInput').value, createdAt: Date.now() });
-      $('playerNameInput').value = '';
-      $('playerNumberInput').value = '';
-      setSync('Spiller lagret');
-    }
-
-    async function addSamplePlayers() {
-      for (const [name,number,position] of samplePlayers) {
-        const newRef = push(ref(state.db, `teams/${state.teamId}/players`));
-        await set(newRef, { name, number, position, status:'Tilgjengelig', createdAt: Date.now() + number });
-      }
-      setSync('Eksempelspillere lagt inn');
-    }
-
-    async function togglePlayerStatus(playerId) {
-      const player = state.team.players[playerId];
-      if (!player) return;
-      const order = ['Tilgjengelig','Usikker','Skadet','Borte'];
-      const next = order[(order.indexOf(player.status || 'Tilgjengelig') + 1) % order.length];
-      await update(ref(state.db, `teams/${state.teamId}/players/${playerId}`), { status: next });
-    }
-
-    async function deletePlayer(playerId) {
-      if (!confirm('Slette spiller?')) return;
-      await remove(ref(state.db, `teams/${state.teamId}/players/${playerId}`));
-    }
-
-    async function createMatch() {
-      const opponent = $('matchOpponentInput').value.trim();
-      if (!opponent) return alert('Skriv inn motstander');
-      const newRef = push(ref(state.db, `teams/${state.teamId}/matches`));
-      await set(newRef, {
-        opponent,
-        venue: $('matchVenueInput').value.trim(),
-        competition: $('matchCompetitionInput').value.trim(),
-        matchDate: $('matchDateInput').value || null,
-        lengthMinutes: Number($('matchLengthInput').value || 60),
-        playersOnField: Number($('playersOnFieldInput').value || 7),
-        status: 'Klar', period: '1. omgang', scoreFor: 0, scoreAgainst: 0,
-        timer: { startedAt:null, pausedAt:null, accumulatedMs:0, running:false },
-        lineup: {}, events: {}, notes: '', createdAt: Date.now(), createdBy: state.user.uid, archived:false
-      });
-      state.activeMatchId = newRef.key;
-      setScreen('match');
-      setSync('Kamp opprettet');
-    }
-
-    async function loadLastLineup() {
-      const matches = getMatchesArray().filter(m => m.id !== state.activeMatchId && m.lineup);
-      if (!matches.length) return alert('Fant ingen tidligere kampoppsett');
-      if (!state.activeMatchId) return alert('Opprett en kamp først');
-      await update(ref(state.db, `teams/${state.teamId}/matches/${state.activeMatchId}/lineup`), matches[0].lineup || {});
-      setSync('Sist oppsett lastet');
-    }
-
-    async function toggleLineup(playerId, selectedValue, onFieldValue) {
-      const match = getActiveMatch();
-      if (!match) return;
-      const current = match.lineup?.[playerId] || { selected:false, onField:false, startedAtMs:null, totalMs:0 };
-      const next = { ...current };
-      if (selectedValue !== null) next.selected = selectedValue;
-      if (onFieldValue !== null) {
-        const now = getElapsedMs(match);
-        if (onFieldValue && !current.onField) {
-          next.onField = true;
-          next.startedAtMs = now;
-        } else if (!onFieldValue && current.onField) {
-          next.onField = false;
-          next.totalMs = Number(next.totalMs || 0) + Math.max(0, now - Number(current.startedAtMs || now));
-          next.startedAtMs = null;
-        }
-      }
-      if (!next.selected) {
-        next.onField = false;
-        next.startedAtMs = null;
-      }
-      await set(ref(state.db, `teams/${state.teamId}/matches/${match.id}/lineup/${playerId}`), next);
-    }
-
-    async function kickoff() {
-      const match = getActiveMatch();
-      if (!match || match.timer?.running) return;
-      await update(ref(state.db, `teams/${state.teamId}/matches/${match.id}`), { status:'Pågår', 'timer/startedAt':Date.now(), 'timer/running':true, 'timer/pausedAt':null });
-      await addEvent('note', null, null, 'Kampstart');
-      startTimer();
-    }
-
-    async function pauseToggle() {
-      const match = getActiveMatch();
-      if (!match) return;
-      if (match.timer?.running) {
-        const elapsed = getElapsedMs(match);
-        await update(ref(state.db, `teams/${state.teamId}/matches/${match.id}`), { status:'Pause', 'timer/accumulatedMs':elapsed, 'timer/running':false, 'timer/pausedAt':Date.now(), 'timer/startedAt':null });
-        await addEvent('pause', null, null, 'Pause');
-        clearTimer();
-      } else {
-        await update(ref(state.db, `teams/${state.teamId}/matches/${match.id}`), { status:'Pågår', 'timer/startedAt':Date.now(), 'timer/running':true, 'timer/pausedAt':null });
-        await addEvent('note', null, null, 'Spillet startet igjen');
-        startTimer();
-      }
-    }
-
-    async function secondHalf() {
-      const match = getActiveMatch();
-      if (!match) return;
-      await update(ref(state.db, `teams/${state.teamId}/matches/${match.id}`), { period:'2. omgang', status:'Pågår' });
-      await addEvent('secondHalf', null, null, '2. omgang startet');
-      if (!(match.timer || {}).running) {
-        await update(ref(state.db, `teams/${state.teamId}/matches/${match.id}`), { 'timer/startedAt':Date.now(), 'timer/running':true, 'timer/pausedAt':null });
-      }
-      startTimer();
-    }
-
-    async function endMatch() {
-      const match = getActiveMatch();
-      if (!match) return;
-      const finalElapsed = getElapsedMs(match);
-      const lineup = { ...(match.lineup || {}) };
-      for (const [playerId,item] of Object.entries(lineup)) {
-        if (item.onField) {
-          item.totalMs = Number(item.totalMs || 0) + Math.max(0, finalElapsed - Number(item.startedAtMs || finalElapsed));
-          item.startedAtMs = null;
-          item.onField = false;
-        }
-      }
-      await update(ref(state.db, `teams/${state.teamId}/matches/${match.id}`), { status:'Slutt', archived:true, endedAt:Date.now(), lineup, 'timer/accumulatedMs':finalElapsed, 'timer/running':false, 'timer/startedAt':null, 'timer/pausedAt':Date.now() });
-      await addEvent('note', null, null, 'Kampslutt');
-      clearTimer();
-      setScreen('report');
-    }
-
-    function openEventEditor(type=null) {
-      $('eventEditor').classList.remove('hidden');
-      if (type) $('eventTypeInput').value = type;
-      $('eventPlayerInput').value = '';
-      $('eventSecondaryPlayerInput').value = '';
-      $('eventNoteInput').value = '';
-    }
-
-    async function addEvent(type, playerId, secondaryPlayerId, note='') {
-      const match = getActiveMatch();
-      if (!match) return;
-      const players = state.team.players || {};
-      const elapsed = getElapsedMs(match);
-      const newRef = push(ref(state.db, `teams/${state.teamId}/matches/${match.id}/events`));
-      const obj = {
-        type, playerId,
-        playerName: playerId && players[playerId] ? players[playerId].name : '',
-        secondaryPlayerId,
-        secondaryPlayerName: secondaryPlayerId && players[secondaryPlayerId] ? players[secondaryPlayerId].name : '',
-        note, sortAt: Date.now(), elapsedMs: elapsed, displayMinute: formatMinute(elapsed), createdBy: state.user.uid, createdAt: Date.now()
-      };
-      await set(newRef, obj);
-      const updates = {};
-      if (type === 'goal') updates['scoreFor'] = Number(match.scoreFor || 0) + 1;
-      if (type === 'goalAgainst') updates['scoreAgainst'] = Number(match.scoreAgainst || 0) + 1;
-      if (type === 'sub' && playerId && secondaryPlayerId) {
-        const now = elapsed;
-        const out = match.lineup?.[playerId] || { selected:true, onField:true, totalMs:0, startedAtMs:0 };
-        const incoming = match.lineup?.[secondaryPlayerId] || { selected:true, onField:false, totalMs:0, startedAtMs:null };
-        out.onField = false;
-        out.totalMs = Number(out.totalMs || 0) + Math.max(0, now - Number(out.startedAtMs || now));
-        out.startedAtMs = null;
-        incoming.selected = true;
-        incoming.onField = true;
-        incoming.startedAtMs = now;
-        updates[`lineup/${playerId}`] = out;
-        updates[`lineup/${secondaryPlayerId}`] = incoming;
-      }
-      if (Object.keys(updates).length) {
-        await update(ref(state.db, `teams/${state.teamId}/matches/${match.id}`), updates);
-      }
-    }
-
-    async function saveEventFromEditor() {
-      const type = $('eventTypeInput').value;
-      const playerId = $('eventPlayerInput').value || null;
-      const secondaryPlayerId = $('eventSecondaryPlayerInput').value || null;
-      const note = $('eventNoteInput').value.trim();
-      if (['goal','assist','sub','save','chance'].includes(type) && !playerId) return alert('Velg spiller');
-      await addEvent(type, playerId, secondaryPlayerId, note);
-      $('eventEditor').classList.add('hidden');
-    }
-
-    async function deleteEvent(eventId) {
-      const match = getActiveMatch();
-      if (!match) return;
-      if (!confirm('Slette hendelse?')) return;
-      const ev = match.events?.[eventId];
-      await remove(ref(state.db, `teams/${state.teamId}/matches/${match.id}/events/${eventId}`));
-      if (ev?.type === 'goal') await update(ref(state.db, `teams/${state.teamId}/matches/${match.id}`), { scoreFor: Math.max(0, Number(match.scoreFor || 0) - 1) });
-      if (ev?.type === 'goalAgainst') await update(ref(state.db, `teams/${state.teamId}/matches/${match.id}`), { scoreAgainst: Math.max(0, Number(match.scoreAgainst || 0) - 1) });
-    }
-
-    async function reverseLastEvent() {
-      const match = getActiveMatch();
-      if (!match?.events) return;
-      const latest = Object.entries(match.events).map(([id,e]) => ({id,...e})).sort((a,b) => (b.sortAt||0)-(a.sortAt||0))[0];
-      if (latest) await deleteEvent(latest.id);
-    }
-
-    function pickSubOut(playerId) {
-      state.simpleSub.outId = state.simpleSub.outId === playerId ? null : playerId;
-      state.simpleSub.inId = null;
-      renderSimpleSub(getActiveMatch());
-    }
-
-    async function pickSubIn(playerId) {
-      if (!state.simpleSub.outId) {
-        alert('Velg først spilleren som skal UT.');
-        return;
-      }
-      state.simpleSub.inId = playerId;
-      const outId = state.simpleSub.outId;
-      const inId = state.simpleSub.inId;
-      await addEvent('sub', outId, inId, 'Enkelt bytte');
-      state.simpleSub = { outId:null, inId:null };
-      renderMatch();
-      setSync('Bytte lagret');
-    }
-
-    function resetSimpleSub() {
-      state.simpleSub = { outId:null, inId:null };
-      renderSimpleSub(getActiveMatch());
-    }
-
-    function exportCsv() {
-      const stats = Object.values(computeSeasonStats());
-      if (!stats.length) return alert('Ingen data å eksportere');
-      const rows = [['Spiller','Kamper','Minutter','Mål','Assist','Bidrag'], ...stats.map(s => [s.name,s.matches,s.minutes,s.goals,s.assists,s.contribution])];
-      const csv = rows.map(r => r.map(v => `"${String(v).replaceAll('"','""')}"`).join(';')).join('\n');
-      const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'sesongrapport.csv';
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-
-    function printReport() { window.print(); }
-
-    async function saveProfile() {
-      const obj = { name:$('profileNameInput').value.trim(), phone:$('profilePhoneInput').value.trim(), teamId:state.teamId||'hof-g11', email:state.user.email||'', updatedAt:Date.now() };
-      await set(ref(state.db, `users/${state.user.uid}`), obj);
-      if (state.user.displayName !== obj.name && obj.name) {
-        try { await updateProfile(state.user, { displayName: obj.name }); } catch {}
-      }
-      setSync('Profil lagret');
-    }
-
-    function fillDemoAuth() {
-      $('loginEmail').value = 'trener@example.com';
-      $('loginPassword').value = 'Password123!';
-      $('registerEmail').value = 'trener@example.com';
-      $('registerPassword').value = 'Password123!';
-      $('registerName').value = 'Trener Test';
-      $('registerTeamId').value = 'hof-g11';
-      $('firebaseConfigInput').value = JSON.stringify(defaultConfig, null, 2);
-    }
-
-    function bindUI() {
-      document.querySelectorAll('[data-nav]').forEach(btn => btn.addEventListener('click', () => setScreen(btn.dataset.nav)));
-      $('btnShowRegister').onclick = () => $('registerCard').classList.remove('hidden');
-      $('btnCancelRegister').onclick = () => $('registerCard').classList.add('hidden');
-      $('btnDemoMode').onclick = fillDemoAuth;
-      $('btnLogin').onclick = async () => {
-        try { await signInWithEmailAndPassword(state.auth, $('loginEmail').value.trim(), $('loginPassword').value); }
-        catch (err) { alert('Innlogging feilet: ' + err.message); }
-      };
-      $('btnRegister').onclick = async () => {
-        try {
-          const email = $('registerEmail').value.trim();
-          const password = $('registerPassword').value;
-          const name = $('registerName').value.trim();
-          const teamId = $('registerTeamId').value.trim() || 'hof-g11';
-          const cred = await createUserWithEmailAndPassword(state.auth, email, password);
-          await updateProfile(cred.user, { displayName: name });
-          await set(ref(state.db, `users/${cred.user.uid}`), { name, email, teamId, createdAt: Date.now() });
-          $('registerCard').classList.add('hidden');
-          alert('Bruker opprettet. TeamId ble satt til ' + teamId + '.');
-        } catch (err) {
-          alert('Registrering feilet: ' + err.message);
-        }
-      };
-      $('btnResetPassword').onclick = async () => {
-        const email = $('loginEmail').value.trim();
-        if (!email) return alert('Skriv inn e-post først');
-        try { await sendPasswordResetEmail(state.auth, email); alert('Tilbakestilling sendt'); }
-        catch (err) { alert('Kunne ikke sende e-post: ' + err.message); }
-      };
-      $('btnSaveTeam').onclick = saveTeamInfo;
-      $('btnLoadSamplePlayers').onclick = addSamplePlayers;
-      $('btnAddPlayer').onclick = addPlayer;
-      $('btnReloadPlayers').onclick = renderTeam;
-      $('btnCreateMatch').onclick = createMatch;
-      $('btnLoadLastLineup').onclick = loadLastLineup;
-      $('btnKickoff').onclick = kickoff;
-      $('btnPauseToggle').onclick = pauseToggle;
-      $('btnSecondHalf').onclick = secondHalf;
-      $('btnEndMatch').onclick = endMatch;
-      $('btnQuickGoal').onclick = () => openEventEditor('goal');
-      $('btnQuickAgainst').onclick = () => openEventEditor('goalAgainst');
-      $('btnQuickSub').onclick = () => openEventEditor('sub');
-      $('btnQuickNote').onclick = () => openEventEditor('note');
-      $('btnSaveEvent').onclick = saveEventFromEditor;
-      $('btnCancelEvent').onclick = () => $('eventEditor').classList.add('hidden');
-      $('btnReverseLastEvent').onclick = reverseLastEvent;
-      $('btnCancelSimpleSub').onclick = resetSimpleSub;
-      $('btnGenerateMatchReport').onclick = () => { $('reportContent').innerHTML = buildMatchSummary(getActiveMatch() || getMatchesArray()[0] || null); $('reportStatusPill').textContent = 'Kamprapport klar'; };
-      $('btnGenerateSeasonReport').onclick = () => { renderReports(); $('reportStatusPill').textContent = 'Sesongrapport klar'; };
-      $('btnPrintReport').onclick = printReport;
-      $('btnExportCsv').onclick = exportCsv;
-      $('btnSaveProfile').onclick = saveProfile;
-      $('btnLogout').onclick = async () => { await signOut(state.auth); };
-      $('btnSaveFirebaseConfig').onclick = () => {
-        try { const cfg = JSON.parse($('firebaseConfigInput').value); saveCfg(cfg); alert('Firebase-config lagret lokalt. Last siden på nytt.'); }
-        catch (err) { alert('Ugyldig JSON: ' + err.message); }
-      };
-      $('btnClearFirebaseConfig').onclick = () => {
-        localStorage.removeItem('lagleder.firebaseConfig');
-        $('firebaseConfigInput').value = JSON.stringify(defaultConfig, null, 2);
-      };
-    }
-
-    window.appActions = { togglePlayerStatus, deletePlayer, toggleLineup, deleteEvent, pickSubOut, pickSubIn };
+    window.appActions={ togglePlayerStatus, deletePlayer, toggleLineup, deleteEvent, pickSubOut, pickSubIn };
     bindUI();
+    initCollapsibles();
     initFirebase();
   </script>
 </body>
