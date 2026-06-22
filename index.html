@@ -150,6 +150,7 @@
           <button id="btnDemoMode" class="warning">Fyll demo-data</button>
         </div>
         <div class="note">Nye brukere får automatisk standardlag <code>hof-g11</code> hvis Lag-ID står tomt ved registrering.</div>
+        <div id="authStatus" class="tiny" style="margin-top:10px;"></div>
       </div>
 
       <div class="card hidden" id="registerCard">
@@ -266,7 +267,7 @@
       </div>
 
       <div class="card hidden collapsible" id="activeMatchCard" data-collapse-key="matchLive">
-        <div class="collapse-head"><div><h3 id="activeMatchTitle">Ingen aktiv kamp</h3><div class="muted tiny" id="activeMatchMeta">-</div></div><span class="collapse-toggle">Skjul</span></div>
+        <div class="collapse-head"><div><h3 class="activeMatchTitleDup">Ingen aktiv kamp</h3><div class="muted tiny activeMatchMetaDup">-</div></div><span class="collapse-toggle">Skjul</span></div>
         <div class="collapse-body">
         <div class="section-title hidden">
           <div>
@@ -556,6 +557,11 @@
 
     function setSync(text) {
       if ($('syncPill')) $('syncPill').textContent = text;
+    }
+
+    function setAuthStatus(text) {
+      const el = $('authStatus');
+      if (el) el.textContent = text || '';
     }
 
     function initCollapsibles() {
@@ -862,8 +868,8 @@
         ? `Fra sidelinja og kampnotatene ble det blant annet lagt merke til: ${noteEvents.slice(0,3).map(n => n.note).filter(Boolean).join(' • ')}.`
         : `Kampen utviklet seg gjennom ${period.toLowerCase()}, med høyt tempo, nye bytter og nok nerve til at både tilskuere og trenere fikk brukt stemmebåndet.`;
       const funOutro = scoreFor > scoreAgainst
-        ? `Hvis noen lurte: ja, det luktet nesten litt cupfinale over stemningen til tider – selv om gresset neppe trenger å ringe lokalavisa selv.`
-        : `Det ble kanskje ikke gullramme rundt resultatet denne gangen, men det var mer enn nok innsats til å gi både publikum og kiosken valuta for pengene.`;
+        ? 'Hvis noen lurte: ja, det luktet nesten litt cupfinale over stemningen til tider – selv om gresset neppe trenger å ringe lokalavisa selv.'
+        : 'Det ble kanskje ikke gullramme rundt resultatet denne gangen, men det var mer enn nok innsats til å gi både publikum og kiosken valuta for pengene.';
       const copyText = [
         headline,
         '',
@@ -1194,8 +1200,22 @@
       $('btnCancelRegister').onclick = () => $('registerCard').classList.add('hidden');
       $('btnDemoMode').onclick = fillDemoAuth;
       $('btnLogin').onclick = async () => {
-        try { await signInWithEmailAndPassword(state.auth, $('loginEmail').value.trim(), $('loginPassword').value); }
-        catch (err) { alert('Innlogging feilet: ' + err.message); }
+        const email = $('loginEmail').value.trim();
+        const password = $('loginPassword').value;
+        if (!email || !password) {
+          setAuthStatus('Skriv inn e-post og passord');
+          alert('Skriv inn e-post og passord');
+          return;
+        }
+        setAuthStatus('Logger inn ...');
+        try {
+          await signInWithEmailAndPassword(state.auth, email, password);
+          setAuthStatus('Innlogging OK');
+        } catch (err) {
+          console.error('Innlogging feilet', err);
+          setAuthStatus('Innlogging feilet: ' + (err?.message || 'Ukjent feil'));
+          alert('Innlogging feilet: ' + (err?.message || 'Ukjent feil'));
+        }
       };
       $('btnRegister').onclick = async () => {
         try {
