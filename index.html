@@ -132,6 +132,13 @@
     .admin-user-card .row { margin-top: 8px; }
     .readonly-input { opacity: .85; }
 
+  
+    .admin-badge { background: rgba(245,158,11,.18); color: #ffd48c; }
+    .auth-ok { color: #9ef0cc; }
+    .auth-error { color: #ffb1b1; }
+    .auth-working { color: #d8e7ff; }
+    .admin-help { margin-top: 8px; }
+    
   </style>
 </head>
 <body>
@@ -280,8 +287,8 @@
         <div class="collapse-body">
         <div class="section-title hidden">
           <div>
-            <h3 id="activeMatchTitle">Ingen aktiv kamp</h3>
-            <div class="muted tiny" id="activeMatchMeta">-</div>
+            <h3 class="activeMatchTitleDup">Ingen aktiv kamp</h3>
+            <div class="muted tiny activeMatchMetaDup">-</div>
           </div>
           <span class="pill" id="matchStatePill">Klar</span>
         </div>
@@ -415,13 +422,13 @@
           <button id="btnSaveFirebaseConfig" class="success">Lagre config lokalt</button>
           <button id="btnClearFirebaseConfig" class="ghost">Tøm config</button>
         </div>
-        <div class="note"><strong>Viktig:</strong> Husk korrekt <code>databaseURL</code>.</div>
+        <div class="note"><strong>Viktig:</strong> Husk korrekt <code>databaseURL</code>. Første admin er også låst til <code>ADMIN_UIDS</code> i fila for at adminpanelet skal komme opp i denne HTML-versjonen.</div>
         </div>
       </div>
       <div class="card collapsible hidden" id="adminCard" data-collapse-key="settingsAdmin">
         <div class="collapse-head"><div><h3>Admin – brukere</h3><div class="tiny">Administrer brukere og lagtilknytning</div></div><span class="collapse-toggle">Skjul</span></div>
         <div class="collapse-body">
-          <div class="note">Som admin kan du endre brukernavn, rolle og <code>teamId</code> for brukere. Hvis to brukere skal ha tilgang til samme lag, gir du begge samme <code>teamId</code>.</div>
+          <div class="note">Som admin kan du endre brukernavn, rolle og <code>teamId</code> for brukere. Hvis to brukere skal ha tilgang til samme lag, gir du begge samme <code>teamId</code>.<div class="tiny admin-help">Kun for appen: full Firebase superadmin (endre andres innloggings-e-post/passord direkte) krever backend/Admin SDK.</div></div>
           <div class="top-actions">
             <button id="btnAdminReloadUsers" class="secondary">Oppdater brukere</button>
           </div>
@@ -464,6 +471,9 @@
       ['Elias Mørk',11,'Angrep'],['Isak Lund',12,'Forsvar'],['Tobias Eide',13,'Midtbane'],['Adrian Hauge',14,'Angrep']
     ];
 
+    const ADMIN_UIDS = ['Lodrv4jbVhNlWCzsgpY897e9Ua32'];
+    const ADMIN_EMAILS = [];
+
     const defaultConfig = {
       apiKey: "AIzaSyBv3l9v4mEn0UAKR10HxNY6szI20JVueCM",
       authDomain: "fotball-app-288cb.firebaseapp.com",
@@ -501,9 +511,12 @@
     }
 
     function renderAuthMiniActions() {
-      $('authMiniActions').innerHTML = state.user
-        ? `<span class="pill">${escapeHtml(state.user.email || '')}</span>`
-        : '<span class="pill">Ikke innlogget</span>';
+      if (!state.user) {
+        $('authMiniActions').innerHTML = '<span class="pill">Ikke innlogget</span>';
+        return;
+      }
+      const adminPill = state.isAdmin ? '<span class="pill admin-badge">Administrator</span>' : '';
+      $('authMiniActions').innerHTML = `<span class="pill">${escapeHtml(state.user.email || '')}</span>${adminPill}`;
     }
 
     function getPlayersArray() {
@@ -579,6 +592,34 @@
       if ($('syncPill')) $('syncPill').textContent = text;
     }
 
+    function isKnownAdmin(user, profile = {}, tokenClaims = {}) {
+      const byClaim = tokenClaims?.admin === true;
+      const byUid = !!(user && ADMIN_UIDS.includes(user.uid));
+      const byEmail = !!(user?.email && ADMIN_EMAILS.includes(String(user.email).toLowerCase()));
+      const byProfile = (profile?.role || 'user') === 'admin';
+      return byClaim || byUid || byEmail || byProfile;
+    }
+
+    function setAuthStatus(text, kind = '') {
+      const el = $('authStatus');
+      if (!el) return;
+      el.textContent = text || '';
+      el.className = 'tiny';
+      if (kind === 'ok') el.classList.add('auth-ok');
+      if (kind === 'error') el.classList.add('auth-error');
+      if (kind === 'working') el.classList.add('auth-working');
+    }
+
+    function handleLoginEnter(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const btn = $('btnLogin');
+        if (btn && !btn.disabled) btn.click();
+      }
+    }
+
+
+
     function setAuthStatus(text) {
       const el = $('authStatus');
       if (el) el.textContent = text || '';
@@ -644,31 +685,62 @@
           state.activeMatch = null;
           clearTimer();
           $('headerSub').textContent = 'Logg inn for å hente laget ditt';
+          setAuthStatus('');
           setScreen('auth');
           return;
         }
         $('headerSub').textContent = `Innlogget som ${user.email}`;
-        await loadUserProfile();
+        try {
+          await loadUserProfile();
+        } catch (err) {
+          console.error('Feil ved lasting av profil', err);
+          setAuthStatus('Feil ved lasting av profil: ' + (err?.message || 'Ukjent feil'), 'error');
+        }
       });
     }
 
     async function loadUserProfile() {
+      const tokenResult = await state.user.getIdTokenResult(true);
       const userRef = ref(state.db, `users/${state.user.uid}`);
       const snap = await get(userRef);
       state.profile = snap.exists() ? snap.val() : {};
+
       if (!snap.exists()) {
-        const fallback = { name: state.user.displayName || '', email: state.user.email || '', teamId: 'hof-g11', createdAt: Date.now() };
+        const fallback = {
+          name: state.user.displayName || '',
+          email: state.user.email || '',
+          teamId: 'hof-g11',
+          role: 'user',
+          createdAt: Date.now()
+        };
         await set(userRef, fallback);
         state.profile = fallback;
       }
+
       if (!state.profile.teamId) {
-        await update(userRef, { teamId: 'hof-g11' });
         state.profile.teamId = 'hof-g11';
       }
+
+      const adminNow = isKnownAdmin(state.user, state.profile, tokenResult.claims || {});
+      state.isAdmin = adminNow;
+
+      // Keep profile role aligned for the client app (not a substitute for backend security)
+      const wantedRole = adminNow ? 'admin' : (state.profile.role || 'user');
+      const profilePatch = {
+        name: state.profile.name || state.user.displayName || '',
+        email: state.profile.email || state.user.email || '',
+        phone: state.profile.phone || '',
+        teamId: state.profile.teamId || 'hof-g11',
+        role: wantedRole,
+        updatedAt: Date.now()
+      };
+      await update(userRef, profilePatch);
+      state.profile = { ...(state.profile || {}), ...profilePatch };
+
       state.teamId = state.profile.teamId;
-      state.isAdmin = (state.profile.role || 'user') === 'admin';
       $('profileNameInput').value = state.profile.name || state.user.displayName || '';
       $('profilePhoneInput').value = state.profile.phone || '';
+      renderAuthMiniActions();
       subscribeTeam();
       subscribeUsersIfAdmin();
       setScreen('home');
@@ -793,16 +865,19 @@
       const current = state.adminUsers?.[uid] || {};
       const name = ($('admin_name_' + uid)?.value || '').trim();
       const email = current.email || ($('admin_email_' + uid)?.value || '').trim();
-      const teamId = ($('admin_team_' + uid)?.value || '').trim();
+      const teamId = ($('admin_team_' + uid)?.value || '').trim() || 'hof-g11';
       const role = ($('admin_role_' + uid)?.value || 'user').trim();
-      await set(ref(state.db, `users/${uid}`), {
-        ...current,
+      await update(ref(state.db, `users/${uid}`), {
         name,
         email,
         teamId,
         role,
         updatedAt: Date.now()
       });
+      if (uid === state.user?.uid) {
+        state.isAdmin = role === 'admin' || ADMIN_UIDS.includes(uid) || ADMIN_EMAILS.includes(String(email).toLowerCase());
+        renderAuthMiniActions();
+      }
       alert('Bruker lagret');
     }
 
@@ -1310,12 +1385,21 @@
     function printReport() { window.print(); }
 
     async function saveProfile() {
-      const obj = { name:$('profileNameInput').value.trim(), phone:$('profilePhoneInput').value.trim(), teamId:state.teamId||'hof-g11', email:state.user.email||'', role: state.profile?.role || 'user', updatedAt:Date.now() };
-      await set(ref(state.db, `users/${state.user.uid}`), obj);
+      const obj = {
+        name: $('profileNameInput').value.trim(),
+        phone: $('profilePhoneInput').value.trim(),
+        teamId: state.teamId || 'hof-g11',
+        email: state.user.email || '',
+        role: state.profile?.role || (state.isAdmin ? 'admin' : 'user'),
+        updatedAt: Date.now()
+      };
+      await update(ref(state.db, `users/${state.user.uid}`), obj);
+      state.profile = { ...(state.profile || {}), ...obj };
       if (state.user.displayName !== obj.name && obj.name) {
         try { await updateProfile(state.user, { displayName: obj.name }); } catch {}
       }
       setSync('Profil lagret');
+      renderAuthMiniActions();
     }
 
     function fillDemoAuth() {
@@ -1339,18 +1423,18 @@
         const email = $('loginEmail').value.trim();
         const password = $('loginPassword').value;
         if (!email || !password) {
-          setAuthStatus('Skriv inn e-post og passord');
+          setAuthStatus('Skriv inn e-post og passord', 'error');
           alert('Skriv inn e-post og passord');
           return;
         }
-        setAuthStatus('Logger inn ...');
+        setAuthStatus('Logger inn ...', 'working');
         $('btnLogin').disabled = true;
         try {
           await signInWithEmailAndPassword(state.auth, email, password);
-          setAuthStatus('Innlogging OK');
+          setAuthStatus('Innlogging OK', 'ok');
         } catch (err) {
           console.error('Innlogging feilet', err);
-          setAuthStatus('Innlogging feilet: ' + (err?.message || 'Ukjent feil'));
+          setAuthStatus('Innlogging feilet: ' + (err?.message || 'Ukjent feil'), 'error');
           alert('Innlogging feilet: ' + (err?.message || 'Ukjent feil'));
         } finally {
           $('btnLogin').disabled = false;
