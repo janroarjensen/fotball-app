@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Lagleder – vad</title>
+  <title>Lagleder – v4</title>
   <style>
     :root {
       --bg: #0b1220;
@@ -133,11 +133,12 @@
     .readonly-input { opacity: .85; }
 
   
+    .prod-badge { background: rgba(49,196,141,.18); color: #9ef0cc; }
     .admin-badge { background: rgba(245,158,11,.18); color: #ffd48c; }
     .auth-ok { color: #9ef0cc; }
     .auth-error { color: #ffb1b1; }
     .auth-working { color: #d8e7ff; }
-    .admin-help { margin-top: 8px; }
+    .readonly-input { opacity: .85; }
     
   </style>
 </head>
@@ -422,13 +423,13 @@
           <button id="btnSaveFirebaseConfig" class="success">Lagre config lokalt</button>
           <button id="btnClearFirebaseConfig" class="ghost">Tøm config</button>
         </div>
-        <div class="note"><strong>Viktig:</strong> Husk korrekt <code>databaseURL</code>. Første admin er også låst til <code>ADMIN_UIDS</code> i fila for at adminpanelet skal komme opp i denne HTML-versjonen.</div>
+        <div class="note"><strong>Viktig:</strong> Husk korrekt <code>databaseURL</code>. Produksjon krever også at admin-brukere får Firebase custom claim <code>admin=true</code>.</div>
         </div>
       </div>
       <div class="card collapsible hidden" id="adminCard" data-collapse-key="settingsAdmin">
         <div class="collapse-head"><div><h3>Admin – brukere</h3><div class="tiny">Administrer brukere og lagtilknytning</div></div><span class="collapse-toggle">Skjul</span></div>
         <div class="collapse-body">
-          <div class="note">Som admin kan du endre brukernavn, rolle og <code>teamId</code> for brukere. Hvis to brukere skal ha tilgang til samme lag, gir du begge samme <code>teamId</code>.<div class="tiny admin-help">Kun for appen: full Firebase superadmin (endre andres innloggings-e-post/passord direkte) krever backend/Admin SDK.</div></div>
+          <div class="note">Som admin kan du endre brukernavn, rolle og <code>teamId</code> for brukere. Hvis to brukere skal ha tilgang til samme lag, gir du begge samme <code>teamId</code>. I produksjon må admin-brukere ha Firebase custom claim <code>admin=true</code>.</div>
           <div class="top-actions">
             <button id="btnAdminReloadUsers" class="secondary">Oppdater brukere</button>
           </div>
@@ -471,8 +472,8 @@
       ['Elias Mørk',11,'Angrep'],['Isak Lund',12,'Forsvar'],['Tobias Eide',13,'Midtbane'],['Adrian Hauge',14,'Angrep']
     ];
 
-    const ADMIN_UIDS = ['Lodrv4jbVhNlWCzsgpY897e9Ua32'];
-    const ADMIN_EMAILS = [];
+    const REQUIRE_ADMIN_CLAIM = true;
+    const ALLOW_PROFILE_ROLE_FALLBACK = false;
 
     const defaultConfig = {
       apiKey: "AIzaSyBv3l9v4mEn0UAKR10HxNY6szI20JVueCM",
@@ -516,7 +517,8 @@
         return;
       }
       const adminPill = state.isAdmin ? '<span class="pill admin-badge">Administrator</span>' : '';
-      $('authMiniActions').innerHTML = `<span class="pill">${escapeHtml(state.user.email || '')}</span>${adminPill}`;
+      const prodPill = '<span class="pill prod-badge">Produksjon</span>';
+      $('authMiniActions').innerHTML = `<span class="pill">${escapeHtml(state.user.email || '')}</span>${adminPill}${prodPill}`;
     }
 
     function getPlayersArray() {
@@ -592,14 +594,6 @@
       if ($('syncPill')) $('syncPill').textContent = text;
     }
 
-    function isKnownAdmin(user, profile = {}, tokenClaims = {}) {
-      const byClaim = tokenClaims?.admin === true;
-      const byUid = !!(user && ADMIN_UIDS.includes(user.uid));
-      const byEmail = !!(user?.email && ADMIN_EMAILS.includes(String(user.email).toLowerCase()));
-      const byProfile = (profile?.role || 'user') === 'admin';
-      return byClaim || byUid || byEmail || byProfile;
-    }
-
     function setAuthStatus(text, kind = '') {
       const el = $('authStatus');
       if (!el) return;
@@ -618,19 +612,10 @@
       }
     }
 
-
-
-    function setAuthStatus(text) {
-      const el = $('authStatus');
-      if (el) el.textContent = text || '';
-    }
-
-    function handleLoginEnter(e) {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        const btn = $('btnLogin');
-        if (btn) btn.click();
-      }
+    function isKnownAdmin(user, profile = {}, tokenClaims = {}) {
+      const byClaim = tokenClaims?.admin === true;
+      const byProfile = ALLOW_PROFILE_ROLE_FALLBACK && ((profile?.role || 'user') === 'admin');
+      return REQUIRE_ADMIN_CLAIM ? byClaim : (byClaim || byProfile);
     }
 
     function initCollapsibles() {
@@ -718,25 +703,11 @@
       }
 
       if (!state.profile.teamId) {
+        await update(userRef, { teamId: 'hof-g11' });
         state.profile.teamId = 'hof-g11';
       }
 
-      const adminNow = isKnownAdmin(state.user, state.profile, tokenResult.claims || {});
-      state.isAdmin = adminNow;
-
-      // Keep profile role aligned for the client app (not a substitute for backend security)
-      const wantedRole = adminNow ? 'admin' : (state.profile.role || 'user');
-      const profilePatch = {
-        name: state.profile.name || state.user.displayName || '',
-        email: state.profile.email || state.user.email || '',
-        phone: state.profile.phone || '',
-        teamId: state.profile.teamId || 'hof-g11',
-        role: wantedRole,
-        updatedAt: Date.now()
-      };
-      await update(userRef, profilePatch);
-      state.profile = { ...(state.profile || {}), ...profilePatch };
-
+      state.isAdmin = isKnownAdmin(state.user, state.profile, tokenResult.claims || {});
       state.teamId = state.profile.teamId;
       $('profileNameInput').value = state.profile.name || state.user.displayName || '';
       $('profilePhoneInput').value = state.profile.phone || '';
@@ -874,11 +845,7 @@
         role,
         updatedAt: Date.now()
       });
-      if (uid === state.user?.uid) {
-        state.isAdmin = role === 'admin' || ADMIN_UIDS.includes(uid) || ADMIN_EMAILS.includes(String(email).toLowerCase());
-        renderAuthMiniActions();
-      }
-      alert('Bruker lagret');
+      alert('Bruker lagret i databasen. For ekte admin-tilgang i produksjon må custom claim settes via Admin SDK/Cloud Function.');
     }
 
     async function adminSetSameTeam(uid) {
@@ -1390,7 +1357,7 @@
         phone: $('profilePhoneInput').value.trim(),
         teamId: state.teamId || 'hof-g11',
         email: state.user.email || '',
-        role: state.profile?.role || (state.isAdmin ? 'admin' : 'user'),
+        role: state.profile?.role || 'user',
         updatedAt: Date.now()
       };
       await update(ref(state.db, `users/${state.user.uid}`), obj);
