@@ -52,30 +52,6 @@
     button.small { padding: 9px 12px; font-size: 0.92rem; }
     .hidden { display: none !important; }
 
-    .desktop-warning {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(4,8,15,0.92);
-      z-index: 9999;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-      text-align: center;
-    }
-    .desktop-warning .box {
-      max-width: 540px;
-      background: #111b31;
-      border: 1px solid var(--line);
-      border-radius: 24px;
-      padding: 24px;
-      box-shadow: var(--shadow);
-    }
-
-    @media (min-width: 760px) {
-      .desktop-warning { display: flex; }
-    }
-
     .app {
       max-width: 560px;
       margin: 0 auto;
@@ -219,14 +195,6 @@
   </style>
 </head>
 <body>
-  <div class="desktop-warning">
-    <div class="box">
-      <h2>Denne siden er laget for mobil</h2>
-      <p>Åpne den på telefon for best opplevelse under kamp.</p>
-      <p class="muted mini">Du kan fortsatt bruke den i nettleser for testing, men designet er optimalisert for små skjermer.</p>
-    </div>
-  </div>
-
   <div class="app">
     <div class="header">
       <div class="title">⚽ Lagleder – mobil kampapp</div>
