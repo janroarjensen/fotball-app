@@ -782,6 +782,89 @@
       populateEventPlayerSelects(activeMatch);
     }
 
+    function formatMatchDateForArticle(value) {
+      if (!value) return '';
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return '';
+      return d.toLocaleDateString('no-NO', { day: 'numeric', month: 'long', year: 'numeric' });
+    }
+
+    function formatEventTimelineForArticle(events) {
+      if (!events.length) return 'Det ble ikke registrert hendelser i kamploggen, men det var nok likevel høy puls på sidelinja.';
+      return events.map(e => {
+        const minute = e.displayMinute || '-';
+        const label = eventLabel(e.type);
+        const main = e.playerName ? ` ${e.playerName}` : '';
+        const secondary = e.secondaryPlayerName ? ` → ${e.secondaryPlayerName}` : '';
+        const note = e.note ? ` (${e.note})` : '';
+        return `${minute}: ${label}${main}${secondary}${note}`;
+      }).join('
+');
+    }
+
+    function buildArticleReadySummary(match) {
+      if (!match) return '<div class="empty">Ingen kamp valgt</div>';
+      const events = Object.values(match.events || {}).sort((a,b) => (a.elapsedMs||0) - (b.elapsedMs||0));
+      const goalEvents = events.filter(e => e.type === 'goal');
+      const againstEvents = events.filter(e => e.type === 'goalAgainst');
+      const saveEvents = events.filter(e => e.type === 'save');
+      const chanceEvents = events.filter(e => e.type === 'chance');
+      const noteEvents = events.filter(e => e.type === 'note');
+      const assists = events.filter(e => e.type === 'assist');
+      const subs = events.filter(e => e.type === 'sub');
+      const teamName = state.team?.info?.name || 'Laget';
+      const opponent = match.opponent || 'Motstander';
+      const venue = match.venue ? ` på ${match.venue}` : '';
+      const competition = match.competition ? ` i ${match.competition}` : '';
+      const matchDate = formatMatchDateForArticle(match.matchDate);
+      const scoreFor = Number(match.scoreFor || 0);
+      const scoreAgainst = Number(match.scoreAgainst || 0);
+      const period = match.period || '2. omgang';
+      const stats = Object.values(computeSeasonStats()).sort((a,b) => b.contribution - a.contribution || b.goals - a.goals || b.assists - a.assists);
+      const standout = stats[0]?.name || 'laginnsatsen';
+      const headline = `${teamName}–${opponent} ${scoreFor}-${scoreAgainst}: Full fart, store smil og litt kaos på best mulig måte`;
+      const ingressBits = [
+        matchDate || null,
+        `${teamName} møtte ${opponent}${venue}${competition}`,
+        `og leverte en forestilling som endte ${scoreFor}-${scoreAgainst}.`,
+        scoreFor >= scoreAgainst ? 'Det ble både innsats, sjanser og noen øyeblikk det er lov å smile av i etterkant.' : 'Selv om resultatet ikke tippet riktig vei, var det nok av innsats, dueller og gode øyeblikk å ta med seg videre.'
+      ].filter(Boolean);
+      const firstPara = `${ingressBits.join(' ')} ` + (goalEvents.length ? `${teamName} noterte ${goalEvents.length} scoring${goalEvents.length===1?'':'er'} og ${againstEvents.length} baklengs.` : `${teamName} kjempet gjennom kampen og holdt trøkket oppe hele veien.`);
+      const secondPara = `${teamName} skapte ${chanceEvents.length} store sjanser, hadde ${saveEvents.length} redninger registrert og gjennomførte ${subs.length} bytter underveis. ` + (assists.length ? `Det ble også loggført ${assists.length} rene assist-situasjon${assists.length===1?'':'er'}, noe som sier sitt om samarbeidet i laget. ` : '') + `${standout} peker seg ut i den automatiske kampvurderingen, men dette var først og fremst en kveld der hele gjengen bidro.`;
+      const thirdPara = noteEvents.length
+        ? `Fra sidelinja og kampnotatene ble det blant annet lagt merke til: ${noteEvents.slice(0,3).map(n => n.note).filter(Boolean).join(' • ')}.`
+        : `Kampen utviklet seg gjennom ${period.toLowerCase()}, med høyt tempo, nye bytter og nok nerve til at både tilskuere og trenere fikk brukt stemmebåndet.`;
+      const funOutro = scoreFor > scoreAgainst
+        ? `Hvis noen lurte: ja, det luktet nesten litt cupfinale over stemningen til tider – selv om gresset neppe trenger å ringe lokalavisa selv.`
+        : `Det ble kanskje ikke gullramme rundt resultatet denne gangen, men det var mer enn nok innsats til å gi både publikum og kiosken valuta for pengene.`;
+      const copyText = [
+        headline,
+        '',
+        firstPara,
+        '',
+        secondPara,
+        '',
+        thirdPara,
+        '',
+        funOutro,
+        '',
+        'KAMPFAKTA',
+        `${teamName} – ${opponent} ${scoreFor}-${scoreAgainst}`,
+        matchDate ? `Dato: ${matchDate}` : null,
+        match.venue ? `Sted: ${match.venue}` : null,
+        match.competition ? `Anledning: ${match.competition}` : null,
+        `Store sjanser: ${chanceEvents.length}`,
+        `Redninger: ${saveEvents.length}`,
+        `Bytter: ${subs.length}`,
+        '',
+        'HENDELSESLOGG',
+        formatEventTimelineForArticle(events)
+      ].filter(Boolean).join('
+');
+      const escaped = copyText.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      return `<div class="note"><strong>Klar for avisa:</strong> Kopier teksten under og lim rett inn i artikkelutkastet.</div><textarea id="articleReadyOutput" readonly style="min-height:360px; margin-top:10px;">${escaped}</textarea><div class="top-actions"><button id="btnCopyArticle" class="success">Kopier tekst</button></div>`;
+    }
+
     function buildMatchSummary(match) {
       if (!match) return '<div class="empty">Ingen kamp valgt</div>';
       const events = Object.values(match.events || {}).sort((a,b) => (a.elapsedMs||0)-(b.elapsedMs||0));
@@ -794,7 +877,7 @@
     }
 
     function renderReports() {
-      $('reportContent').innerHTML = buildMatchSummary(state.activeMatch || getMatchesArray()[0] || null);
+      $('reportContent').innerHTML = buildArticleReadySummary(state.activeMatch || getMatchesArray()[0] || null);
       const stats = computeSeasonStats();
       $('seasonStatsList').innerHTML = Object.values(stats).sort((a,b) => b.contribution - a.contribution || b.minutes - a.minutes)
         .map(s => `<div class="player-item"><div><strong>${escapeHtml(s.name)}</strong><div class="muted tiny">Kamper ${s.matches} • Minutter ${s.minutes} • Mål ${s.goals} • Assist ${s.assists}</div></div><div class="badge">Bidrag ${s.contribution}</div></div>`).join('')
@@ -1126,8 +1209,22 @@
       $('btnCancelEvent').onclick = () => $('eventEditor').classList.add('hidden');
       $('btnReverseLastEvent').onclick = reverseLastEvent;
       $('btnCancelSimpleSub').onclick = resetSimpleSub;
-      $('btnGenerateMatchReport').onclick = () => { $('reportContent').innerHTML = buildMatchSummary(getActiveMatch() || getMatchesArray()[0] || null); $('reportStatusPill').textContent = 'Kamprapport klar'; };
+      $('btnGenerateMatchReport').onclick = () => { $('reportContent').innerHTML = buildArticleReadySummary(getActiveMatch() || getMatchesArray()[0] || null); $('reportStatusPill').textContent = 'Kamprapport klar'; };
       $('btnGenerateSeasonReport').onclick = () => { renderReports(); $('reportStatusPill').textContent = 'Sesongrapport klar'; };
+      document.addEventListener('click', async (e) => {
+        if (e.target && e.target.id === 'btnCopyArticle') {
+          const ta = $('articleReadyOutput');
+          if (!ta) return;
+          try {
+            await navigator.clipboard.writeText(ta.value);
+            alert('Kamprapport kopiert til utklippstavlen');
+          } catch {
+            ta.select();
+            document.execCommand('copy');
+            alert('Kamprapport kopiert til utklippstavlen');
+          }
+        }
+      });
       $('btnPrintReport').onclick = printReport;
       $('btnExportCsv').onclick = exportCsv;
       $('btnSaveProfile').onclick = saveProfile;
