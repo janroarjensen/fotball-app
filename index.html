@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Lagleder – v4</title>
+  <title>Lagleder – v3</title>
   <style>
     :root {
       --bg: #0b1220;
@@ -124,6 +124,14 @@
     .collapse-toggle { font-size:.9rem; color: var(--muted); }
     .collapsed .collapse-body { display:none; }
 
+  
+    .admin-user-card {
+      padding: 12px; border-radius: 14px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.06); margin-bottom: 10px;
+    }
+    .admin-user-card .meta { color: var(--muted); font-size: .78rem; margin-top: 4px; }
+    .admin-user-card .row { margin-top: 8px; }
+    .readonly-input { opacity: .85; }
+
   </style>
 </head>
 <body>
@@ -150,7 +158,6 @@
           <button id="btnDemoMode" class="warning">Fyll demo-data</button>
         </div>
         <div class="note">Nye brukere får automatisk standardlag <code>hof-g11</code> hvis Lag-ID står tomt ved registrering.</div>
-        <div id="authStatus" class="tiny" style="margin-top:10px;"></div>
       </div>
 
       <div class="card hidden" id="registerCard">
@@ -167,6 +174,7 @@
           <button id="btnRegister" class="success">Opprett bruker</button>
           <button id="btnCancelRegister" class="ghost">Avbryt</button>
         </div>
+        <div class="tiny" style="margin-top:8px;">Flere brukere kan dele samme <code>teamId</code> og dermed logge inn mot samme lag.</div>
       </div>
     </section>
 
@@ -409,6 +417,16 @@
         <div class="note"><strong>Viktig:</strong> Husk korrekt <code>databaseURL</code>.</div>
         </div>
       </div>
+      <div class="card collapsible hidden" id="adminCard" data-collapse-key="settingsAdmin">
+        <div class="collapse-head"><div><h3>Admin – brukere</h3><div class="tiny">Administrer brukere og lagtilknytning</div></div><span class="collapse-toggle">Skjul</span></div>
+        <div class="collapse-body">
+          <div class="note">Som admin kan du endre brukernavn, rolle og <code>teamId</code> for brukere. Hvis to brukere skal ha tilgang til samme lag, gir du begge samme <code>teamId</code>.</div>
+          <div class="top-actions">
+            <button id="btnAdminReloadUsers" class="secondary">Oppdater brukere</button>
+          </div>
+          <div id="adminUsersList" style="margin-top:12px;"></div>
+        </div>
+      </div>
     </section>
   </div>
 
@@ -435,7 +453,8 @@
       app: null, auth: null, db: null, user: null, profile: null, teamId: null,
       team: { info: {}, players: {}, matches: {} },
       activeMatchId: null, activeMatch: null, timerInterval: null,
-      simpleSub: { outId: null, inId: null }
+      simpleSub: { outId: null, inId: null },
+      isAdmin: false, adminUsers: {}
     };
 
     const samplePlayers = [
@@ -559,11 +578,6 @@
       if ($('syncPill')) $('syncPill').textContent = text;
     }
 
-    function setAuthStatus(text) {
-      const el = $('authStatus');
-      if (el) el.textContent = text || '';
-    }
-
     function initCollapsibles() {
       document.querySelectorAll('.collapsible').forEach(card => {
         const key = card.dataset.collapseKey;
@@ -609,6 +623,8 @@
         if (!user) {
           state.profile = null;
           state.teamId = null;
+          state.isAdmin = false;
+          state.adminUsers = {};
           state.team = { info: {}, players: {}, matches: {} };
           state.activeMatchId = null;
           state.activeMatch = null;
@@ -636,9 +652,11 @@
         state.profile.teamId = 'hof-g11';
       }
       state.teamId = state.profile.teamId;
+      state.isAdmin = (state.profile.role || 'user') === 'admin';
       $('profileNameInput').value = state.profile.name || state.user.displayName || '';
       $('profilePhoneInput').value = state.profile.phone || '';
       subscribeTeam();
+      subscribeUsersIfAdmin();
       setScreen('home');
     }
 
@@ -694,12 +712,116 @@
       return map;
     }
 
+    function subscribeUsersIfAdmin() {
+      if (!state.isAdmin) {
+        state.adminUsers = {};
+        renderAdmin();
+        return;
+      }
+      const usersRef = ref(state.db, 'users');
+      onValue(usersRef, (snap) => {
+        state.adminUsers = snap.exists() ? snap.val() : {};
+        renderAdmin();
+      }, (err) => {
+        console.error('Kunne ikke laste brukere', err);
+      });
+    }
+
+    function renderAdmin() {
+      const card = $('adminCard');
+      const list = $('adminUsersList');
+      if (!card || !list) return;
+      card.classList.toggle('hidden', !state.isAdmin);
+      if (!state.isAdmin) return;
+
+      const users = Object.entries(state.adminUsers || {}).map(([uid, u]) => ({ uid, ...(u || {}) }))
+        .sort((a,b) => (a.name || a.email || '').localeCompare(b.name || b.email || ''));
+
+      if (!users.length) {
+        list.innerHTML = '<div class="empty">Ingen brukere funnet</div>';
+        return;
+      }
+
+      list.innerHTML = users.map(u => {
+        const role = u.role || 'user';
+        const sameTeam = (u.teamId || '') === (state.teamId || '');
+        return `
+          <div class="admin-user-card">
+            <strong>${escapeHtml(u.name || '(uten navn)')}</strong>
+            <div class="meta">${escapeHtml(u.email || '')} • uid: ${u.uid}</div>
+            <div class="row">
+              <div><input id="admin_name_${u.uid}" value="${escapeHtml(u.name || '')}" placeholder="Navn" /></div>
+            </div>
+            <div class="row">
+              <div><input id="admin_email_${u.uid}" class="readonly-input" value="${escapeHtml(u.email || '')}" placeholder="E-post" readonly /></div>
+              <div><input id="admin_team_${u.uid}" value="${escapeHtml(u.teamId || '')}" placeholder="teamId" /></div>
+            </div>
+            <div class="row">
+              <div>
+                <select id="admin_role_${u.uid}">
+                  <option value="user" ${role === 'user' ? 'selected' : ''}>Bruker</option>
+                  <option value="admin" ${role === 'admin' ? 'selected' : ''}>Admin</option>
+                </select>
+              </div>
+              <div class="tiny" style="display:flex;align-items:center;">${sameTeam ? 'Samme lag som deg nå' : 'Ikke koblet til ditt lag nå'}</div>
+            </div>
+            <div class="top-actions">
+              <button class="small success" onclick="window.appActions.adminSaveUser('${u.uid}')">Lagre bruker</button>
+              <button class="small secondary" onclick="window.appActions.adminSetSameTeam('${u.uid}')">Sett samme lag</button>
+              <button class="small ghost" onclick="window.appActions.adminSendReset('${u.uid}')">Send passordreset</button>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    async function adminSaveUser(uid) {
+      if (!state.isAdmin) return;
+      const current = state.adminUsers?.[uid] || {};
+      const name = ($('admin_name_' + uid)?.value || '').trim();
+      const email = current.email || ($('admin_email_' + uid)?.value || '').trim();
+      const teamId = ($('admin_team_' + uid)?.value || '').trim();
+      const role = ($('admin_role_' + uid)?.value || 'user').trim();
+      await set(ref(state.db, `users/${uid}`), {
+        ...current,
+        name,
+        email,
+        teamId,
+        role,
+        updatedAt: Date.now()
+      });
+      alert('Bruker lagret');
+    }
+
+    async function adminSetSameTeam(uid) {
+      if (!state.isAdmin) return;
+      const input = $('admin_team_' + uid);
+      if (input) input.value = state.teamId || '';
+      await adminSaveUser(uid);
+    }
+
+    async function adminSendReset(uid) {
+      if (!state.isAdmin) return;
+      const email = state.adminUsers?.[uid]?.email || ($('admin_email_' + uid)?.value || '').trim();
+      if (!email) {
+        alert('Fant ingen e-post på brukeren');
+        return;
+      }
+      try {
+        await sendPasswordResetEmail(state.auth, email);
+        alert('Tilbakestilling sendt til ' + email);
+      } catch (err) {
+        console.error(err);
+        alert('Kunne ikke sende passordreset: ' + (err?.message || 'Ukjent feil'));
+      }
+    }
+
     function renderAll() {
       renderHome();
       renderTeam();
       renderMatch();
       renderReports();
       renderHeader();
+      renderAdmin();
     }
 
     function renderHeader() {
@@ -831,7 +953,8 @@
         const secondary = e.secondaryPlayerName ? ` → ${e.secondaryPlayerName}` : '';
         const note = e.note ? ` (${e.note})` : '';
         return `${minute}: ${label}${main}${secondary}${note}`;
-      }).join('\n');
+      }).join('
+');
     }
 
     function buildArticleReadySummary(match) {
@@ -891,7 +1014,8 @@
         '',
         'HENDELSESLOGG',
         formatEventTimelineForArticle(events)
-      ].filter(Boolean).join('\n');
+      ].filter(Boolean).join('
+');
       const escaped = copyText.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
       return `<div class="note"><strong>Klar for avisa:</strong> Kopier teksten under og lim rett inn i artikkelutkastet.</div><textarea id="articleReadyOutput" readonly style="min-height:360px; margin-top:10px;">${escaped}</textarea><div class="top-actions"><button id="btnCopyArticle" class="success">Kopier tekst</button></div>`;
     }
@@ -1174,7 +1298,7 @@
     function printReport() { window.print(); }
 
     async function saveProfile() {
-      const obj = { name:$('profileNameInput').value.trim(), phone:$('profilePhoneInput').value.trim(), teamId:state.teamId||'hof-g11', email:state.user.email||'', updatedAt:Date.now() };
+      const obj = { name:$('profileNameInput').value.trim(), phone:$('profilePhoneInput').value.trim(), teamId:state.teamId||'hof-g11', email:state.user.email||'', role: state.profile?.role || 'user', updatedAt:Date.now() };
       await set(ref(state.db, `users/${state.user.uid}`), obj);
       if (state.user.displayName !== obj.name && obj.name) {
         try { await updateProfile(state.user, { displayName: obj.name }); } catch {}
@@ -1192,40 +1316,14 @@
       $('firebaseConfigInput').value = JSON.stringify(defaultConfig, null, 2);
     }
 
-    function handleLoginEnter(e) {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        $('btnLogin').click();
-      }
-    }
-
     function bindUI() {
       document.querySelectorAll('[data-nav]').forEach(btn => btn.addEventListener('click', () => setScreen(btn.dataset.nav)));
-      $('loginEmail').addEventListener('keydown', handleLoginEnter);
-      $('loginPassword').addEventListener('keydown', handleLoginEnter);
       $('btnShowRegister').onclick = () => $('registerCard').classList.remove('hidden');
       $('btnCancelRegister').onclick = () => $('registerCard').classList.add('hidden');
       $('btnDemoMode').onclick = fillDemoAuth;
       $('btnLogin').onclick = async () => {
-        const email = $('loginEmail').value.trim();
-        const password = $('loginPassword').value;
-        if (!email || !password) {
-          setAuthStatus('Skriv inn e-post og passord');
-          alert('Skriv inn e-post og passord');
-          return;
-        }
-        setAuthStatus('Logger inn ...');
-        $('btnLogin').disabled = true;
-        try {
-          await signInWithEmailAndPassword(state.auth, email, password);
-          setAuthStatus('Innlogging OK');
-        } catch (err) {
-          console.error('Innlogging feilet', err);
-          setAuthStatus('Innlogging feilet: ' + (err?.message || 'Ukjent feil'));
-          alert('Innlogging feilet: ' + (err?.message || 'Ukjent feil'));
-        } finally {
-          $('btnLogin').disabled = false;
-        }
+        try { await signInWithEmailAndPassword(state.auth, $('loginEmail').value.trim(), $('loginPassword').value); }
+        catch (err) { alert('Innlogging feilet: ' + err.message); }
       };
       $('btnRegister').onclick = async () => {
         try {
@@ -1294,9 +1392,11 @@
         localStorage.removeItem('lagleder.firebaseConfig');
         $('firebaseConfigInput').value = JSON.stringify(defaultConfig, null, 2);
       };
+      const adminReload = $('btnAdminReloadUsers');
+      if (adminReload) adminReload.onclick = () => renderAdmin();
     }
 
-    window.appActions = { togglePlayerStatus, deletePlayer, toggleLineup, deleteEvent, pickSubOut, pickSubIn };
+    window.appActions = { togglePlayerStatus, deletePlayer, toggleLineup, deleteEvent, pickSubOut, pickSubIn, adminSaveUser, adminSetSameTeam, adminSendReset };
     bindUI();
     initCollapsibles();
     initFirebase();
