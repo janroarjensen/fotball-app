@@ -520,6 +520,21 @@
       return base;
     }
 
+    function formatMinutesPlayed(ms) {
+      const mins = Math.max(0, Math.round(Number(ms || 0) / 60000));
+      return `${mins} min`;
+    }
+
+    function getPlayerMinutesInMatch(match, playerId) {
+      const line = match?.lineup?.[playerId];
+      if (!line) return 0;
+      let total = Number(line.totalMs || 0);
+      if (line.onField && line.startedAtMs != null) {
+        total += Math.max(0, getElapsedMs(match) - Number(line.startedAtMs || 0));
+      }
+      return total;
+    }
+
     function startTimer() {
       if (state.timerInterval) clearInterval(state.timerInterval);
       state.timerInterval = setInterval(updateTimerDisplay, 1000);
@@ -534,6 +549,9 @@
 
     function updateTimerDisplay() {
       $('matchTimer').textContent = formatClock(state.activeMatch ? getElapsedMs(state.activeMatch) : 0);
+      if (state.activeMatch && !$('simpleSubCard').classList.contains('hidden')) {
+        renderSimpleSub(state.activeMatch);
+      }
     }
 
     function setSync(text) {
@@ -721,11 +739,20 @@
       const onField = players.filter(p => lineup[p.id]?.selected && lineup[p.id]?.onField);
       const bench = players.filter(p => lineup[p.id]?.selected && !lineup[p.id]?.onField);
       $('subSelectionPill').textContent = state.simpleSub.outId ? 'Velg spiller INN' : 'Velg spiller UT';
+
       $('onFieldList').innerHTML = onField.length
-        ? onField.map(p => `<div class="player-chip ${state.simpleSub.outId===p.id?'selected':''}" onclick="window.appActions.pickSubOut('${p.id}')"><span>#${p.number||'-'} ${escapeHtml(p.name||'')}</span><span class="badge gray">UT</span></div>`).join('')
+        ? onField.map(p => {
+            const playedMs = getPlayerMinutesInMatch(match, p.id);
+            return `<div class="player-chip ${state.simpleSub.outId===p.id?'selected':''}" onclick="window.appActions.pickSubOut('${p.id}')"><span>#${p.number||'-'} ${escapeHtml(p.name||'')}<br><span class="tiny">Spilt: ${formatMinutesPlayed(playedMs)}</span></span><span class="badge gray">UT</span></div>`;
+          }).join('')
         : '<div class="empty">Ingen registrert på banen</div>';
+
       $('benchList').innerHTML = bench.length
-        ? bench.map(p => `<div class="player-chip ${state.simpleSub.inId===p.id?'selected':''}" onclick="window.appActions.pickSubIn('${p.id}')"><span>#${p.number||'-'} ${escapeHtml(p.name||'')}</span><span class="badge gray">INN</span></div>`).join('')
+        ? bench.map(p => {
+            const playedMs = getPlayerMinutesInMatch(match, p.id);
+            const minsText = playedMs > 0 ? `Spilt: ${formatMinutesPlayed(playedMs)}` : 'Ikke spilt ennå';
+            return `<div class="player-chip ${state.simpleSub.inId===p.id?'selected':''}" onclick="window.appActions.pickSubIn('${p.id}')"><span>#${p.number||'-'} ${escapeHtml(p.name||'')}<br><span class="tiny">${minsText}</span></span><span class="badge gray">INN</span></div>`;
+          }).join('')
         : '<div class="empty">Ingen på benken</div>';
     }
 
