@@ -267,6 +267,12 @@
           <button id="btnAddPlayer">Legg til spiller</button>
           <button id="btnReloadPlayers" class="ghost">Oppdater liste</button>
         </div>
+        <div class="note" style="margin-top:12px;">Masseregistrer spillere ved å lime inn <strong>ett navn per linje</strong>. Nummer settes tomt, posisjon settes til <strong>Utespiller</strong> og status settes til <strong>Tilgjengelig</strong>.</div>
+        <textarea id="bulkPlayersInput" placeholder="Ola Hansen&#10;Emil Berg&#10;Noah Johansen"></textarea>
+        <div class="top-actions">
+          <button id="btnAddPlayersBulk" class="secondary">Masseregistrer spillere</button>
+          <button id="btnClearBulkPlayers" class="ghost">Tøm felt</button>
+        </div>
         <div id="playersList" style="margin-top:12px;"></div>
         </div>
       </div>
@@ -1200,6 +1206,40 @@
       $('playerNumberInput').value = '';
       setSync('Spiller lagret');
     }
+    function parseBulkPlayerNames(text) {
+      return String(text || '')
+        .replaceAll('\r', '')
+        .split('\n')
+        .map(v => v.trim())
+        .filter(Boolean)
+        .map(name => ({
+          name,
+          number: null,
+          position: 'Utespiller',
+          status: 'Tilgjengelig'
+        }));
+    }
+    async function addPlayersBulkSimple() {
+      const raw = $('bulkPlayersInput')?.value || '';
+      const items = parseBulkPlayerNames(raw);
+      if (!items.length) return alert('Lim inn minst ett navn først.');
+      const baseRef = ref(state.db, `teams/${state.teamId}/players`);
+      let created = 0;
+      for (const item of items) {
+        const newRef = push(baseRef);
+        await set(newRef, {
+          name: item.name,
+          number: item.number,
+          position: item.position,
+          status: item.status,
+          createdAt: Date.now() + created
+        });
+        created += 1;
+      }
+      $('bulkPlayersInput').value = '';
+      setSync(`${created} spillere lagret`);
+      alert(`${created} spillere ble registrert.`);
+    }
 
     async function addSamplePlayers() {
       for (const [name,number,position] of samplePlayers) {
@@ -1555,6 +1595,8 @@
       $('btnSaveTeam').onclick = saveTeamInfo;
       $('btnLoadSamplePlayers').onclick = addSamplePlayers;
       $('btnAddPlayer').onclick = addPlayer;
+      $('btnAddPlayersBulk').onclick = addPlayersBulkSimple;
+      $('btnClearBulkPlayers').onclick = () => { $('bulkPlayersInput').value = ''; };
       $('btnReloadPlayers').onclick = renderTeam;
       $('btnCreateMatch').onclick = createMatch;
       $('btnLoadLastLineup').onclick = loadLastLineup;
