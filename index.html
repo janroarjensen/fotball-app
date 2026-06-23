@@ -129,8 +129,9 @@
     .bulk-sub-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
     .bulk-sub-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
     .list-scroll { max-height:280px; overflow:auto; }
+    .player-actions { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+    .player-actions .small { box-shadow:none; }
     @media (max-width:520px){ .bulk-sub-grid { grid-template-columns:1fr; } }
-
   
     .collapse-head { display:flex; justify-content:space-between; align-items:center; gap:10px; cursor:pointer; user-select:none; }
     .collapse-head h2, .collapse-head h3, .collapse-head h4 { margin:0; }
@@ -156,7 +157,7 @@
 <body>
   <div class="app">
     <div class="header">
-      <div class="title">⚽ Lagleder – bytter og målregistrering forbedret</div>
+      <div class="title">⚽ Lagleder – produksjonsklar med bytter, målknapp og målregistrering forbedret</div>
       <div class="subtitle" id="headerSub">Logg inn for å hente laget ditt</div>
       <div class="top-actions" id="authMiniActions"></div>
     </div>
@@ -588,6 +589,20 @@
     function playerLabel(p) {
       return `#${p.number||'-'} ${p.name||''}`.trim();
     }
+    async function quickGoal(playerId) {
+      const match = getActiveMatch();
+      if (!match) return;
+      await addEvent('goal', playerId, null, 'Hurtigregistrert mål');
+      renderMatch();
+      setSync('Mål registrert');
+    }
+    async function quickOpponentGoal() {
+      const match = getActiveMatch();
+      if (!match) return;
+      await addEvent('goalAgainst', null, null, 'Hurtigregistrert mål imot');
+      renderMatch();
+      setSync('Mål imot registrert');
+    }
     function formatClock(ms) {
       const t = Math.floor(ms / 1000);
       return `${String(Math.floor(t/60)).padStart(2,'0')}:${String(t%60).padStart(2,'0')}`;
@@ -955,15 +970,19 @@
       const onField = players.filter(p => lineup[p.id]?.selected && lineup[p.id]?.onField);
       const bench = players.filter(p => lineup[p.id]?.selected && !lineup[p.id]?.onField);
       $('subSelectionPill').textContent = state.simpleSub.outId ? 'Velg spiller INN' : 'Velg spiller UT';
-      $('onFieldList').innerHTML = onField.length ? onField.map(p => {
+      $('onFieldList').innerHTML = onField.length
+        ? onField.map(p => {
             const playedMs = getPlayerMinutesInMatch(match, p.id);
-            return `<div class="player-chip ${state.simpleSub.outId===p.id?'selected':''}" onclick="window.appActions.pickSubOut('${p.id}')"><span>#${p.number||'-'} ${escapeHtml(p.name||'')}<br><span class="tiny">Spilt: ${formatMinutesPlayed(playedMs)}</span></span><span class="badge gray">UT</span></div>`;
-          }).join('') : '<div class="empty">Ingen registrert på banen</div>';
-      $('benchList').innerHTML = bench.length ? bench.map(p => {
+            return `<div class="player-chip ${state.simpleSub.outId===p.id?'selected':''}"><span onclick="window.appActions.pickSubOut('${p.id}')" style="flex:1;cursor:pointer;">#${p.number||'-'} ${escapeHtml(p.name||'')}<br><span class="tiny">Spilt: ${formatMinutesPlayed(playedMs)}</span></span><span class="player-actions"><button class="small success" type="button" onclick="window.appActions.quickGoal('${p.id}')">Mål</button><span class="badge gray">UT</span></span></div>`;
+          }).join('')
+        : '<div class="empty">Ingen registrert på banen</div>';
+      $('benchList').innerHTML = bench.length
+        ? bench.map(p => {
             const playedMs = getPlayerMinutesInMatch(match, p.id);
             const minsText = playedMs > 0 ? `Spilt: ${formatMinutesPlayed(playedMs)}` : 'Ikke spilt ennå';
             return `<div class="player-chip ${state.simpleSub.inId===p.id?'selected':''}" onclick="window.appActions.pickSubIn('${p.id}')"><span>#${p.number||'-'} ${escapeHtml(p.name||'')}<br><span class="tiny">${minsText}</span></span><span class="badge gray">INN</span></div>`;
-          }).join('') : '<div class="empty">Ingen på benken</div>';
+          }).join('')
+        : '<div class="empty">Ingen på benken</div>';
     }
     function renderBulkSub(match) {
       $('bulkSubCard').classList.toggle('hidden', !match);
@@ -973,14 +992,18 @@
       const onField = players.filter(p => lineup[p.id]?.selected && lineup[p.id]?.onField);
       const bench = players.filter(p => lineup[p.id]?.selected && !lineup[p.id]?.onField);
       $('bulkSubPill').textContent = `${state.bulkSub.outIds.length} ut • ${state.bulkSub.inIds.length} inn`;
-      $('bulkOutList').innerHTML = onField.length ? onField.map(p => {
-        const selected = state.bulkSub.outIds.includes(p.id);
-        return `<div class="player-chip ${selected?'multi-selected':''}" onclick="window.appActions.toggleBulkOut('${p.id}')"><span>${escapeHtml(playerLabel(p))}</span><span class="badge ${selected?'warn':'gray'}">${selected?'Valgt':'UT'}</span></div>`;
-      }).join('') : '<div class="empty">Ingen på banen</div>';
-      $('bulkInList').innerHTML = bench.length ? bench.map(p => {
-        const selected = state.bulkSub.inIds.includes(p.id);
-        return `<div class="player-chip ${selected?'multi-selected':''}" onclick="window.appActions.toggleBulkIn('${p.id}')"><span>${escapeHtml(playerLabel(p))}</span><span class="badge ${selected?'warn':'gray'}">${selected?'Valgt':'INN'}</span></div>`;
-      }).join('') : '<div class="empty">Ingen på benken</div>';
+      $('bulkOutList').innerHTML = onField.length
+        ? onField.map(p => {
+            const selected = state.bulkSub.outIds.includes(p.id);
+            return `<div class="player-chip ${selected?'multi-selected':''}"><span onclick="window.appActions.toggleBulkOut('${p.id}')" style="flex:1;cursor:pointer;">${escapeHtml(playerLabel(p))}</span><span class="player-actions"><button class="small success" type="button" onclick="window.appActions.quickGoal('${p.id}')">Mål</button><span class="badge ${selected?'warn':'gray'}">${selected?'Valgt':'UT'}</span></span></div>`;
+          }).join('')
+        : '<div class="empty">Ingen på banen</div>';
+      $('bulkInList').innerHTML = bench.length
+        ? bench.map(p => {
+            const selected = state.bulkSub.inIds.includes(p.id);
+            return `<div class="player-chip ${selected?'multi-selected':''}" onclick="window.appActions.toggleBulkIn('${p.id}')"><span>${escapeHtml(playerLabel(p))}</span><span class="badge ${selected?'warn':'gray'}">${selected?'Valgt':'INN'}</span></div>`;
+          }).join('')
+        : '<div class="empty">Ingen på benken</div>';
     }
     function renderEventPickers(match) {
       if (!match) return;
@@ -1005,7 +1028,7 @@
       $('lineupPill').textContent = `${Object.keys(selected).length} valgt`;
       $('lineupList').innerHTML = players.map(p => {
         const sel = selected[p.id] || {};
-        return `<div class="player-item"><div><strong>#${p.number||'-'} ${escapeHtml(p.name||'')}</strong><div class="muted tiny">${escapeHtml(p.position||'Utespiller')} • ${escapeHtml(p.status||'Tilgjengelig')}</div></div><div style="display:grid;gap:6px;min-width:140px;"><label class="tiny"><input type="checkbox" ${sel.selected?'checked':''} onchange="window.appActions.toggleLineup('${p.id}', this.checked, null)" /> Kampstall</label><label class="tiny"><input type="checkbox" ${sel.onField?'checked':''} onchange="window.appActions.toggleLineup('${p.id}', null, this.checked)" /> På banen</label></div></div>`;
+        return `<div class="player-item"><div><strong>#${p.number||'-'} ${escapeHtml(p.name||'')}</strong><div class="muted tiny">${escapeHtml(p.position||'Utespiller')} • ${escapeHtml(p.status||'Tilgjengelig')}</div>${sel.onField?'<div class="tiny" style="margin-top:6px;">På banen nå</div>':''}</div><div style="display:grid;gap:6px;min-width:140px;"><label class="tiny"><input type="checkbox" ${sel.selected?'checked':''} onchange="window.appActions.toggleLineup('${p.id}', this.checked, null)" /> Kampstall</label><label class="tiny"><input type="checkbox" ${sel.onField?'checked':''} onchange="window.appActions.toggleLineup('${p.id}', null, this.checked)" /> På banen</label>${sel.onField?`<button class="small success" type="button" onclick="window.appActions.quickGoal('${p.id}')">Mål</button>`:''}</div></div>`;
       }).join('') || '<div class="empty">Ingen spillere i laget</div>';
     }
 
@@ -1540,7 +1563,7 @@
       $('btnSecondHalf').onclick = secondHalf;
       $('btnEndMatch').onclick = endMatch;
       $('btnQuickGoal').onclick = () => openEventEditor('goal');
-      $('btnQuickAgainst').onclick = () => openEventEditor('goalAgainst');
+      $('btnQuickAgainst').onclick = quickOpponentGoal;
       $('btnQuickSub').onclick = () => openEventEditor('sub');
       $('btnQuickNote').onclick = () => openEventEditor('note');
       $('btnSaveEvent').onclick = saveEventFromEditor;
@@ -1582,7 +1605,7 @@
       if (adminReload) adminReload.onclick = () => renderAdmin();
     }
 
-    window.appActions = { togglePlayerStatus, deletePlayer, toggleLineup, deleteEvent, pickSubOut, pickSubIn, toggleBulkOut, toggleBulkIn, pickEventPrimary, pickEventSecondary, adminSaveUser, adminSetSameTeam, adminSendReset };
+    window.appActions = { togglePlayerStatus, deletePlayer, toggleLineup, deleteEvent, pickSubOut, pickSubIn, toggleBulkOut, toggleBulkIn, pickEventPrimary, pickEventSecondary, quickGoal, quickOpponentGoal, adminSaveUser, adminSetSameTeam, adminSendReset };
     bindUI();
     initCollapsibles();
     initFirebase();
