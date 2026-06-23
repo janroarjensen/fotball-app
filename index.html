@@ -36,6 +36,8 @@
       border-radius: 14px;
       outline: none;
     }
+    select { min-height: 48px; }
+    option { background: #0f172a; color: #f8fbff; }
     textarea { min-height: 120px; resize: vertical; }
     button {
       border: none;
@@ -118,6 +120,17 @@
       cursor: pointer;
     }
     .player-chip.selected { outline: 2px solid var(--accent-2); background: rgba(59,130,246,.15); }
+    .player-chip.multi-selected { outline: 2px solid var(--warn); background: rgba(245,158,11,.16); }
+    .event-picker-grid { display:grid; gap:10px; margin-top:10px; }
+    .event-picker-list { max-height:260px; overflow:auto; border:1px solid var(--line); border-radius:14px; padding:8px; background: rgba(255,255,255,.03); }
+    .event-picker-list .player-chip { margin-bottom:8px; }
+    .event-picker-list .player-chip:last-child { margin-bottom:0; }
+    .event-picker-label { font-size:.82rem; color:var(--muted); margin:4px 0 6px; }
+    .bulk-sub-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
+    .bulk-sub-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+    .list-scroll { max-height:280px; overflow:auto; }
+    @media (max-width:520px){ .bulk-sub-grid { grid-template-columns:1fr; } }
+
   
     .collapse-head { display:flex; justify-content:space-between; align-items:center; gap:10px; cursor:pointer; user-select:none; }
     .collapse-head h2, .collapse-head h3, .collapse-head h4 { margin:0; }
@@ -143,7 +156,7 @@
 <body>
   <div class="app">
     <div class="header">
-      <div class="title">⚽ Lagleder – rettet enklere bytte</div>
+      <div class="title">⚽ Lagleder – bytter og målregistrering forbedret</div>
       <div class="subtitle" id="headerSub">Logg inn for å hente laget ditt</div>
       <div class="top-actions" id="authMiniActions"></div>
     </div>
@@ -335,6 +348,26 @@
         </div>
       </div>
 
+      <div class="card hidden collapsible" id="bulkSubCard" data-collapse-key="matchBulkSub">
+        <div class="collapse-head"><div><h3>Massebytte</h3><span class="pill" id="bulkSubPill">0 ut • 0 inn</span></div><span class="collapse-toggle">Skjul</span></div>
+        <div class="collapse-body">
+        <div class="note">Her kan du velge <strong>flere spillere UT</strong> og like mange <strong>spillere INN</strong>. Når antall stemmer, kan du lagre alle byttene i én operasjon.</div>
+        <div class="bulk-sub-grid">
+          <div>
+            <h4>På banen (velg UT)</h4>
+            <div id="bulkOutList" class="list-scroll"></div>
+          </div>
+          <div>
+            <h4>Benk / kampstall (velg INN)</h4>
+            <div id="bulkInList" class="list-scroll"></div>
+          </div>
+        </div>
+        <div class="bulk-sub-actions">
+          <button id="btnApplyBulkSub" class="success">Lagre massebytte</button>
+          <button id="btnClearBulkSub" class="ghost">Nullstill valg</button>
+        </div>
+        </div>
+      </div>
       <div class="card hidden collapsible" id="eventControlsCard" data-collapse-key="matchEventsEditor">
         <div class="collapse-head"><h3>Registrer hendelse</h3><span class="collapse-toggle">Skjul</span></div>
         <div class="collapse-body">
@@ -359,11 +392,21 @@
                 <option value="save">Redning</option>
               </select>
             </div>
-            <div><select id="eventPlayerInput"></select></div>
-          </div>
-          <div class="row" style="margin-top:10px;">
-            <div><select id="eventSecondaryPlayerInput"></select></div>
             <div><input id="eventNoteInput" placeholder="Notat / kommentar" /></div>
+          </div>
+          <div class="event-picker-grid">
+            <div>
+              <div class="event-picker-label" id="eventPrimaryLabel">Velg spiller</div>
+              <div id="eventPrimaryPicker" class="event-picker-list"></div>
+            </div>
+            <div>
+              <div class="event-picker-label" id="eventSecondaryLabel">Evt. spiller 2</div>
+              <div id="eventSecondaryPicker" class="event-picker-list"></div>
+            </div>
+          </div>
+          <div class="hidden">
+            <select id="eventPlayerInput"></select>
+            <select id="eventSecondaryPlayerInput"></select>
           </div>
           <div class="btn-grid" style="margin-top:10px;">
             <button id="btnSaveEvent">Lagre hendelse</button>
@@ -461,6 +504,8 @@
       team: { info: {}, players: {}, matches: {} },
       activeMatchId: null, activeMatch: null, timerInterval: null,
       simpleSub: { outId: null, inId: null },
+      bulkSub: { outIds: [], inIds: [] },
+      eventPicker: { primaryId: null, secondaryId: null },
       isAdmin: false, adminUsers: {}
     };
 
@@ -531,6 +576,18 @@
       return m || null;
     }
 
+    function toggleInArray(arr, value) {
+      return arr.includes(value) ? arr.filter(x => x !== value) : [...arr, value];
+    }
+    function resetBulkSub() {
+      state.bulkSub = { outIds: [], inIds: [] };
+    }
+    function resetEventPicker() {
+      state.eventPicker = { primaryId: null, secondaryId: null };
+    }
+    function playerLabel(p) {
+      return `#${p.number||'-'} ${p.name||''}`.trim();
+    }
     function formatClock(ms) {
       const t = Math.floor(ms / 1000);
       return `${String(Math.floor(t/60)).padStart(2,'0')}:${String(t%60).padStart(2,'0')}`;
@@ -898,23 +955,50 @@
       const onField = players.filter(p => lineup[p.id]?.selected && lineup[p.id]?.onField);
       const bench = players.filter(p => lineup[p.id]?.selected && !lineup[p.id]?.onField);
       $('subSelectionPill').textContent = state.simpleSub.outId ? 'Velg spiller INN' : 'Velg spiller UT';
-
-      $('onFieldList').innerHTML = onField.length
-        ? onField.map(p => {
+      $('onFieldList').innerHTML = onField.length ? onField.map(p => {
             const playedMs = getPlayerMinutesInMatch(match, p.id);
             return `<div class="player-chip ${state.simpleSub.outId===p.id?'selected':''}" onclick="window.appActions.pickSubOut('${p.id}')"><span>#${p.number||'-'} ${escapeHtml(p.name||'')}<br><span class="tiny">Spilt: ${formatMinutesPlayed(playedMs)}</span></span><span class="badge gray">UT</span></div>`;
-          }).join('')
-        : '<div class="empty">Ingen registrert på banen</div>';
-
-      $('benchList').innerHTML = bench.length
-        ? bench.map(p => {
+          }).join('') : '<div class="empty">Ingen registrert på banen</div>';
+      $('benchList').innerHTML = bench.length ? bench.map(p => {
             const playedMs = getPlayerMinutesInMatch(match, p.id);
             const minsText = playedMs > 0 ? `Spilt: ${formatMinutesPlayed(playedMs)}` : 'Ikke spilt ennå';
             return `<div class="player-chip ${state.simpleSub.inId===p.id?'selected':''}" onclick="window.appActions.pickSubIn('${p.id}')"><span>#${p.number||'-'} ${escapeHtml(p.name||'')}<br><span class="tiny">${minsText}</span></span><span class="badge gray">INN</span></div>`;
-          }).join('')
-        : '<div class="empty">Ingen på benken</div>';
+          }).join('') : '<div class="empty">Ingen på benken</div>';
     }
-
+    function renderBulkSub(match) {
+      $('bulkSubCard').classList.toggle('hidden', !match);
+      if (!match) return;
+      const players = getPlayersArray();
+      const lineup = match.lineup || {};
+      const onField = players.filter(p => lineup[p.id]?.selected && lineup[p.id]?.onField);
+      const bench = players.filter(p => lineup[p.id]?.selected && !lineup[p.id]?.onField);
+      $('bulkSubPill').textContent = `${state.bulkSub.outIds.length} ut • ${state.bulkSub.inIds.length} inn`;
+      $('bulkOutList').innerHTML = onField.length ? onField.map(p => {
+        const selected = state.bulkSub.outIds.includes(p.id);
+        return `<div class="player-chip ${selected?'multi-selected':''}" onclick="window.appActions.toggleBulkOut('${p.id}')"><span>${escapeHtml(playerLabel(p))}</span><span class="badge ${selected?'warn':'gray'}">${selected?'Valgt':'UT'}</span></div>`;
+      }).join('') : '<div class="empty">Ingen på banen</div>';
+      $('bulkInList').innerHTML = bench.length ? bench.map(p => {
+        const selected = state.bulkSub.inIds.includes(p.id);
+        return `<div class="player-chip ${selected?'multi-selected':''}" onclick="window.appActions.toggleBulkIn('${p.id}')"><span>${escapeHtml(playerLabel(p))}</span><span class="badge ${selected?'warn':'gray'}">${selected?'Valgt':'INN'}</span></div>`;
+      }).join('') : '<div class="empty">Ingen på benken</div>';
+    }
+    function renderEventPickers(match) {
+      if (!match) return;
+      const players = getPlayersArray();
+      const selectedIds = Object.entries(match.lineup || {}).filter(([,v]) => v.selected).map(([id]) => id);
+      const lineupPlayers = players.filter(p => selectedIds.includes(p.id));
+      const type = $('eventTypeInput').value;
+      const primaryLabel = ({goal:'Velg målscorer', assist:'Velg spiller', sub:'Velg spiller UT', save:'Velg keeper/spiller', chance:'Velg spiller', goalAgainst:'Ingen spiller nødvendig', pause:'Ingen spiller nødvendig', secondHalf:'Ingen spiller nødvendig', note:'Ingen spiller nødvendig'})[type] || 'Velg spiller';
+      const secondaryLabel = ({goal:'Velg evt. assist', assist:'Velg evt. spiller 2', sub:'Velg spiller INN', save:'Evt. spiller 2', chance:'Evt. spiller 2', goalAgainst:'Ikke i bruk', pause:'Ikke i bruk', secondHalf:'Ikke i bruk', note:'Ikke i bruk'})[type] || 'Evt. spiller 2';
+      $('eventPrimaryLabel').textContent = primaryLabel;
+      $('eventSecondaryLabel').textContent = secondaryLabel;
+      const primaryDisabled = ['goalAgainst','pause','secondHalf','note'].includes(type);
+      const secondaryDisabled = !['goal','assist','sub'].includes(type);
+      $('eventPrimaryPicker').innerHTML = primaryDisabled ? '<div class="empty">Ikke nødvendig for denne hendelsen</div>' : lineupPlayers.map(p => `<div class="player-chip ${state.eventPicker.primaryId===p.id?'selected':''}" onclick="window.appActions.pickEventPrimary('${p.id}')"><span>${escapeHtml(playerLabel(p))}</span><span class="badge gray">Velg</span></div>`).join('') || '<div class="empty">Ingen spillere i kampstall</div>';
+      $('eventSecondaryPicker').innerHTML = secondaryDisabled ? '<div class="empty">Ikke nødvendig for denne hendelsen</div>' : lineupPlayers.map(p => `<div class="player-chip ${state.eventPicker.secondaryId===p.id?'selected':''}" onclick="window.appActions.pickEventSecondary('${p.id}')"><span>${escapeHtml(playerLabel(p))}</span><span class="badge gray">Velg</span></div>`).join('') || '<div class="empty">Ingen spillere i kampstall</div>';
+      $('eventPlayerInput').value = state.eventPicker.primaryId || '';
+      $('eventSecondaryPlayerInput').value = state.eventPicker.secondaryId || '';
+    }
     function renderLineup(match) {
       const players = getPlayersArray();
       const selected = match.lineup || {};
@@ -936,6 +1020,9 @@
       const opts = ['<option value="">Velg spiller</option>'].concat(lineupPlayers.map(p => `<option value="${p.id}">#${p.number||'-'} ${escapeHtml(p.name||'')}</option>`)).join('');
       $('eventPlayerInput').innerHTML = opts;
       $('eventSecondaryPlayerInput').innerHTML = '<option value="">Evt. spiller 2</option>' + lineupPlayers.map(p => `<option value="${p.id}">#${p.number||'-'} ${escapeHtml(p.name||'')}</option>`).join('');
+      if (state.eventPicker.primaryId && !lineupIds.includes(state.eventPicker.primaryId)) state.eventPicker.primaryId = null;
+      if (state.eventPicker.secondaryId && !lineupIds.includes(state.eventPicker.secondaryId)) state.eventPicker.secondaryId = null;
+      renderEventPickers(match);
     }
 
     function renderEvents(match) {
@@ -964,6 +1051,7 @@
       updateTimerDisplay();
       renderLineup(activeMatch);
       renderSimpleSub(activeMatch);
+      renderBulkSub(activeMatch);
       renderEvents(activeMatch);
       populateEventPlayerSelects(activeMatch);
     }
@@ -1127,6 +1215,9 @@
         lineup: {}, events: {}, notes: '', createdAt: Date.now(), createdBy: state.user.uid, archived:false
       });
       state.activeMatchId = newRef.key;
+      state.simpleSub = { outId:null, inId:null };
+      resetBulkSub();
+      resetEventPicker();
       setScreen('match');
       setSync('Kamp opprettet');
     }
@@ -1212,6 +1303,9 @@
       await update(ref(state.db, `teams/${state.teamId}/matches/${match.id}`), { status:'Slutt', archived:true, endedAt:Date.now(), lineup, 'timer/accumulatedMs':finalElapsed, 'timer/running':false, 'timer/startedAt':null, 'timer/pausedAt':Date.now() });
       await addEvent('note', null, null, 'Kampslutt');
       clearTimer();
+      state.simpleSub = { outId:null, inId:null };
+      resetBulkSub();
+      resetEventPicker();
       setScreen('report');
     }
 
@@ -1221,6 +1315,8 @@
       $('eventPlayerInput').value = '';
       $('eventSecondaryPlayerInput').value = '';
       $('eventNoteInput').value = '';
+      resetEventPicker();
+      renderEventPickers(getActiveMatch());
     }
 
     async function addEvent(type, playerId, secondaryPlayerId, note='') {
@@ -1264,7 +1360,9 @@
       const secondaryPlayerId = $('eventSecondaryPlayerInput').value || null;
       const note = $('eventNoteInput').value.trim();
       if (['goal','assist','sub','save','chance'].includes(type) && !playerId) return alert('Velg spiller');
+      if (type === 'sub' && !secondaryPlayerId) return alert('Velg også hvem som skal inn');
       await addEvent(type, playerId, secondaryPlayerId, note);
+      resetEventPicker();
       $('eventEditor').classList.add('hidden');
     }
 
@@ -1308,6 +1406,38 @@
     function resetSimpleSub() {
       state.simpleSub = { outId:null, inId:null };
       renderSimpleSub(getActiveMatch());
+    }
+    function toggleBulkOut(playerId) {
+      state.bulkSub.outIds = toggleInArray(state.bulkSub.outIds, playerId);
+      renderBulkSub(getActiveMatch());
+    }
+    function toggleBulkIn(playerId) {
+      state.bulkSub.inIds = toggleInArray(state.bulkSub.inIds, playerId);
+      renderBulkSub(getActiveMatch());
+    }
+    async function applyBulkSub() {
+      const match = getActiveMatch();
+      if (!match) return;
+      const outIds = [...state.bulkSub.outIds];
+      const inIds = [...state.bulkSub.inIds];
+      if (!outIds.length || !inIds.length) return alert('Velg minst én spiller ut og én spiller inn');
+      if (outIds.length !== inIds.length) return alert('Antall spillere UT og INN må være likt');
+      for (let i = 0; i < outIds.length; i++) {
+        await addEvent('sub', outIds[i], inIds[i], `Massebytte ${i+1}`);
+      }
+      resetBulkSub();
+      renderMatch();
+      setSync('Massebytte lagret');
+    }
+    function pickEventPrimary(playerId) {
+      state.eventPicker.primaryId = state.eventPicker.primaryId === playerId ? null : playerId;
+      $('eventPlayerInput').value = state.eventPicker.primaryId || '';
+      renderEventPickers(getActiveMatch());
+    }
+    function pickEventSecondary(playerId) {
+      state.eventPicker.secondaryId = state.eventPicker.secondaryId === playerId ? null : playerId;
+      $('eventSecondaryPlayerInput').value = state.eventPicker.secondaryId || '';
+      renderEventPickers(getActiveMatch());
     }
 
     function exportCsv() {
@@ -1414,9 +1544,12 @@
       $('btnQuickSub').onclick = () => openEventEditor('sub');
       $('btnQuickNote').onclick = () => openEventEditor('note');
       $('btnSaveEvent').onclick = saveEventFromEditor;
-      $('btnCancelEvent').onclick = () => $('eventEditor').classList.add('hidden');
+      $('btnCancelEvent').onclick = () => { resetEventPicker(); $('eventEditor').classList.add('hidden'); };
       $('btnReverseLastEvent').onclick = reverseLastEvent;
       $('btnCancelSimpleSub').onclick = resetSimpleSub;
+      $('btnApplyBulkSub').onclick = applyBulkSub;
+      $('btnClearBulkSub').onclick = () => { resetBulkSub(); renderBulkSub(getActiveMatch()); };
+      $('eventTypeInput').onchange = () => { resetEventPicker(); renderEventPickers(getActiveMatch()); };
       $('btnGenerateMatchReport').onclick = () => { $('reportContent').innerHTML = buildArticleReadySummary(getActiveMatch() || getMatchesArray()[0] || null); $('reportStatusPill').textContent = 'Kamprapport klar'; };
       $('btnGenerateSeasonReport').onclick = () => { renderReports(); $('reportStatusPill').textContent = 'Sesongrapport klar'; };
       document.addEventListener('click', async (e) => {
@@ -1449,7 +1582,7 @@
       if (adminReload) adminReload.onclick = () => renderAdmin();
     }
 
-    window.appActions = { togglePlayerStatus, deletePlayer, toggleLineup, deleteEvent, pickSubOut, pickSubIn, adminSaveUser, adminSetSameTeam, adminSendReset };
+    window.appActions = { togglePlayerStatus, deletePlayer, toggleLineup, deleteEvent, pickSubOut, pickSubIn, toggleBulkOut, toggleBulkIn, pickEventPrimary, pickEventSecondary, adminSaveUser, adminSetSameTeam, adminSendReset };
     bindUI();
     initCollapsibles();
     initFirebase();
